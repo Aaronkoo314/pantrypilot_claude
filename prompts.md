@@ -557,6 +557,12 @@ is in `REFLECTION.md`.
 **Continued 11 September 2026.** Same tool, Claude Code (Opus 5). Everything above this line is
 the v1 log and stops at the first push, as it says. Everything below is the back end.
 
+**Who did which part.** The rule below is the same one stated in `assessment.md`: anything that
+needed my authorisation was mine, anything that did not was the agent's. The prompts in this
+section are mine and are quoted as sent. The calls, the reading of responses and the code are the
+agent's. Where an entry says a source was called by hand or a defect found, that is the agent's
+work and my part was deciding what to do about it.
+
 One change of tool worth declaring up front: Problem Set 1's master prompt was drafted in ChatGPT
 and the build was done in Claude Code. Problem Set 2 has no ChatGPT stage at all. The AI Studio
 session from Problem Set 1 is no longer retrievable, which is the practical reason this work
@@ -580,7 +586,7 @@ The brief says this twice, in two different panels, and both times it is the sam
 call the service once by hand and paste the real answer into the prompt, because an agent asked
 to guess field names will invent something reasonable, and reasonable is not correct.
 
-I ran six candidates in parallel — SingStat, data.gov.sg, Open-Meteo, USDA FoodData Central,
+Six candidates went out in parallel — SingStat, data.gov.sg, Open-Meteo, USDA FoodData Central,
 Open Food Facts and Nager.Date — each scouted and then re-tested by a second, sceptical pass whose
 only job was to find the reason I would have to abandon the source on Monday night.
 
@@ -681,7 +687,7 @@ The dev server will not run. Vite's resolver fails on this machine's mapped `D:`
 transform never runs and raw JSX reaches the browser as a syntax error on the first `<`.
 `npm run build` compiles the same files without complaint.
 
-I did not fix this. It is a local path problem that does not exist on Vercel, which builds from a
+I decided not to fix it. It is a local path problem that does not exist on Vercel, which builds from a
 clean checkout on Linux, and the brief says to test the function on the Vercel URL anyway. I
 verified the screen against the production build on port 4173 instead and moved on. Chasing it
 would have been an evening spent on a machine, not on a product.
@@ -705,12 +711,12 @@ it can never be registered. A made-up hostname works today and could resolve to 
 machine after they register it — and a deployed function would then carry the credential there.
 
 **The thing that actually cost me time.** After the first revert I reloaded the screen and the panel
-still said "refused". I had a theory about edge caching within about five seconds. The server was
+still said "refused", and an edge-caching theory arrived within about five seconds. The server was
 fine: a fetch from that same tab returned 200 and `Garlic, raw`.
 
 The fault was in my own test script. It walked the app with `document.querySelector('.splash')?.click()`
 and the same optional chaining on the next two steps, and the page was already on a screen where
-none of those elements existed. All three steps no-opped, silently, and I read a panel that had been
+none of those elements existed. All three steps no-opped, silently, and what got read was a panel that had been
 sitting in the DOM since the break. **The `?.` turned three failures into no output at all**, which
 is the same shape as everything else this weekend caught me on: the system reported success and was
 wrong, and the check that would have told me was an assertion I had not written.

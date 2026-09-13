@@ -20,6 +20,24 @@ PantryPilot against them, and then assesses the collaboration that produced it.
 > Section 1 is the step that came before both, and it is the reason the back end looks the way it
 > does rather than being an API bolted to whichever screen was easiest.
 
+> **On who did which part, because section 4 is about exactly this and blurring it here would
+> undercut the whole document.** PantryPilot's back end was built with Claude Code. The division
+> was consistent enough to state as a rule: **anything that needed my authorisation was mine, and
+> anything that did not was the agent's.**
+>
+> Mine, therefore: what the product is for and who it is for; that the repository is public; which
+> claim to repair and which provider to trust with it; that the refused test would corrupt the key
+> in transit rather than edit the Vercel variable; that the live status belongs on the screen
+> rather than only at an endpoint; obtaining the credential and installing it in Vercel; and every
+> instance of "yes, do that" — including the standing kind, where I told the agent to stop asking
+> and keep going. A decision I delegated in advance is still a decision I made, and section 4 Q5
+> is where I account for the two places that turned out to matter.
+>
+> The agent's: the research, the reading of responses, the code, and the checks. Where a sentence
+> below says an endpoint was called by hand, a licence page read, a response shape diffed or a
+> defect found, the agent did that and I read what came back. Saying "I found" about those would
+> be the tidier sentence and the false one.
+
 ---
 
 ## Who this product is for
@@ -139,7 +157,7 @@ and leaving it out of this section would be the kind of tidy omission the exerci
 That root carries eight visible claims — every ingredient row's price, the shopping cost, price per
 person, the whole-dish total and the Cheapest-first sort.
 
-**A source for it exists and I checked it by hand.** SingStat publishes "Average Retail Prices Of
+**A source for it exists and the agent called it by hand.** SingStat publishes "Average Retail Prices Of
 Selected Consumer Items, Monthly" (table M213761), updated monthly, no credential required, under
 terms that permit a public derived product.
 
@@ -238,64 +256,15 @@ talks to is its own. Download the built JavaScript bundle and search it for the 
 and for the upstream hostname. Then search the repository's whole history, not only its current
 files. All four must come back empty.
 
-### B3 · Each failure says a different, actable sentence — **Met**
+### B3 · Each failure says a different, actable sentence
+A spinner tells this user nothing about which situation they are in, and three of the situations
+are ones they can act on: come back later, pick a different ingredient, tell me it is broken.
 
-Six states, none of them a spinner. All six have now been produced on the live URL and read there,
-four of them by deliberately breaking the deployment and undoing it again.
+**How to tell:** force each state and read the screen. Loading, the source having no record, the
+provider refusing, the provider being unreachable, and the credential being unset must produce
+different sentences. None may be a spinner, and none may blame a party that was not involved.
 
-| State | What the reader is told | How it was produced |
-| --- | --- | --- |
-| **loading** | "Checking USDA FoodData Central for Aubergine…" | a 5-second delay injected in front of `/api/nutrition` |
-| **ok** | `Garlic, raw · per 100 g` — 6.62 g protein, and which figures USDA measured | normal operation |
-| **empty** | "USDA FoodData Central publishes no record matching 'Aubergine', so this ingredient has no sourced figure." | an ingredient USDA does not hold under that name |
-| **refused** | "USDA FoodData Central refused the request (status 403). …This is our problem to fix, not yours." | commit `f3512c4`, reverted by `4e66f57` |
-| **unreachable** | "We could not reach USDA FoodData Central at all… **Try again in a few minutes.**" | commit `2d36c4d`, reverted by `f7e8637` |
-| **not-configured** | "This copy of PantryPilot has no credential configured…" | seen before the variable was added |
-
-**The two deliberate breaks, and what each proved.**
-
-*Unreachable* pointed the upstream at `api.nal.usda.gov.invalid` — `.invalid` is reserved by
-RFC 2606 and can never resolve, so a production function could not accidentally carry a credential
-to a stranger's host. `/api/health` reported `keyConfigured: true, upstreamStatus: "unreachable"`
-and the function returned **502**.
-
-*Refused* sent a deliberately corrupted credential. I did this by appending a character to the key
-on the way out rather than by editing the Vercel variable, which the checklist's literal wording
-suggests. Same observable — a genuine 403 from USDA — with the real key never altered, which
-matters because the variable is stored as a Secret and cannot be read back: a value retyped from
-memory into that field is a credential lost. The undo is a `git revert` visible in the history
-rather than my word that I put it back.
-
-`/api/health` reported `keyConfigured: **true**, upstreamStatus: 403`, and this is the point of the
-whole exercise. Those two failures are indistinguishable from outside: a missing variable is sent
-as the string "undefined" and the provider refuses it exactly as it refuses a wrong value. The
-health endpoint is the only thing that separates *add the variable and redeploy* from *re-copy the
-value and check for a trailing space*.
-
-**The two sentences differ in the way that matters.** Refused says the fault is ours and waiting
-will not help. Unreachable says to come back in a few minutes, because there it will. A single
-"something went wrong" would have collapsed two different pieces of advice into none.
-
-**Both breaks are undone and verified**, not remembered:
-
-```
-/api/health                  → {"keyConfigured":true,"upstreamStatus":200}
-/api/nutrition?id=garlic     → ok · Garlic, raw · Foundation · protein 6.62 g
-/api/nutrition?id=palm-sugar → empty · totalHits 0
-/                            → 200
-```
-
-and the working tree contains no corrupted key site. The history shows each break immediately
-followed by its revert, which is a stronger claim than a tidy diff would have been.
-
-**One thing the breaks caught that was not about the product.** Reading the screen after the first
-revert, the panel still said "refused". I had a theory about caching before I checked. The server
-was fine; my test script used `?.click()` throughout, the page was already on a screen where none
-of those elements existed, every step no-opped silently, and I read a panel that had been sitting
-in the DOM since the break. Optional chaining turned three failures into no output at all. The
-re-run asserts each step and prints whether it found the element.
-
-## B4 · A near miss is never dressed as an answer
+### B4 · A near miss is never dressed as an answer
 The product asks the source for things like galangal and palm sugar, which it may not hold. The
 temptation a search API creates is to show the closest thing it found, under a citation, as though
 it were the thing asked for.
@@ -327,11 +296,11 @@ here is closed and known: it is the 93 ingredients in `src/data/pantryData.js`.
 # 3. Marking
 
 Twelve criteria, marked against the live URL on 11 September 2026. The evidence column is the
-command I ran or the file and line I read, so that somebody else can get the same answer. Where a
+command the agent ran or the file and line it read, so that somebody else can get the same answer. Where a
 criterion is not met I have said so rather than softening it, and two of the entries below record
 faults that were mine rather than the product's.
 
-**Summary: eight met, three partly met, one not tested.**
+**Summary: nine met, two partly met, one not tested.**
 
 | | Criterion | Verdict |
 | --- | --- | --- |
@@ -357,7 +326,7 @@ zero elements whose right edge exceeds the viewport. Nothing scrolls sideways. T
 on the path from arrival to a meal's method is 48 pixels tall; the serving steppers are 56 and the
 ingredient group headers 71.
 
-I am claiming less here than the criterion asks. I measured that nothing overflows and that the
+This claims less than the criterion asks. What was measured is that nothing overflows and that the
 targets are large enough. I did not measure whether they are within a **thumb's** reach on a real
 phone held in one hand, which is what the criterion actually says, and which needs a hand and a
 phone rather than a viewport emulator.
@@ -450,36 +419,62 @@ The key is read as `process.env.USDA_API_KEY` inside `api/` and nowhere else. `.
 `.env*` in a commit made **before** the key existed, which is the ordering that matters: a
 credential that reaches git history stays readable after the file is deleted.
 
-## B3 · Each failure says a different, actable sentence — **Partly met**
+## B3 · Each failure says a different, actable sentence — **Met**
 
-Six distinct states are implemented, one more than the brief asks for, and none is a spinner. Three
-have been seen on the live URL:
+Six states, none of them a spinner. All six have now been produced on the live URL and read there,
+four of them by deliberately breaking the deployment and undoing it again.
 
-- **ok** — `Garlic, raw`, Foundation, 2020-10-30, with the figures and the citation.
-- **empty** — "USDA FoodData Central publishes no record matching 'Palm Sugar'".
-- **not-configured** — seen before the environment variable was added, naming the variable.
+| State | What the reader is told | How it was produced |
+| --- | --- | --- |
+| **loading** | "Checking USDA FoodData Central for Aubergine…" | a 5-second delay injected in front of `/api/nutrition` |
+| **ok** | `Garlic, raw · per 100 g` — 6.62 g protein, and which figures USDA measured | normal operation |
+| **empty** | "USDA FoodData Central publishes no record matching 'Aubergine', so this ingredient has no sourced figure." | an ingredient USDA does not hold under that name |
+| **refused** | "USDA FoodData Central refused the request (status 403). …This is our problem to fix, not yours." | commit `f3512c4`, reverted by `4e66f57` |
+| **unreachable** | "We could not reach USDA FoodData Central at all… **Try again in a few minutes.**" | commit `2d36c4d`, reverted by `f7e8637` |
+| **not-configured** | "This copy of PantryPilot has no credential configured…" | seen before the variable was added |
 
-**refused** and **unreachable** have not been produced on the live URL *by breaking the server*,
-which is what the criterion asks for. What I have done instead is make the browser see each reply,
-by replacing `fetch` in the console so the live page received a 403 from the upstream, then an
-unreachable upstream, then a 500 from our own service. The status row moved through every one and
-said a different, correct sentence each time.
+**The two deliberate breaks, and what each proved.**
 
-That verifies the client half and not the server half, and the distinction matters: it proves the
-screen renders the right words when it is handed each reply, and proves nothing about whether the
-function actually produces those replies when a key is wrong or a hostname does not resolve. The
-guards are written and reviewed; they have not been fired in anger.
+*Unreachable* pointed the upstream at `api.nal.usda.gov.invalid` — `.invalid` is reserved by
+RFC 2606 and can never resolve, so a production function could not accidentally carry a credential
+to a stranger's host. `/api/health` reported `keyConfigured: true, upstreamStatus: "unreachable"`
+and the function returned **502**.
 
-One thing that half-test did catch, which is why it was worth doing: at 21 seconds the row still
-showed the previous state and I briefly had two of them rendering identically. That was the poll
-interval, not a mapping fault — the same stale-measurement mistake as B5, twice in one afternoon.
+*Refused* sent a deliberately corrupted credential. I did this by appending a character to the key
+on the way out rather than by editing the Vercel variable, which the checklist's literal wording
+suggests. Same observable — a genuine 403 from USDA — with the real key never altered, which
+matters because the variable is stored as a Secret and cannot be read back: a value retyped from
+memory into that field is a credential lost. The undo is a `git revert` visible in the history
+rather than my word that I put it back.
 
-So: partly met. The honest form of the remaining work is a wrong key and a bad hostname on the real
-deployment, each followed by undoing it.
+`/api/health` reported `keyConfigured: **true**, upstreamStatus: 403`, and this is the point of the
+whole exercise. Those two failures are indistinguishable from outside: a missing variable is sent
+as the string "undefined" and the provider refuses it exactly as it refuses a wrong value. The
+health endpoint is the only thing that separates *add the variable and redeploy* from *re-copy the
+value and check for a trailing space*.
 
-Until I do that, this is partly met. I am recording it as such rather than marking it met on the
-strength of having written the branches, because "I wrote the code for it" is exactly the kind of
-claim this criterion exists to refuse.
+**The two sentences differ in the way that matters.** Refused says the fault is ours and waiting
+will not help. Unreachable says to come back in a few minutes, because there it will. A single
+"something went wrong" would have collapsed two different pieces of advice into none.
+
+**Both breaks are undone and verified**, not remembered:
+
+```
+/api/health                  → {"keyConfigured":true,"upstreamStatus":200}
+/api/nutrition?id=garlic     → ok · Garlic, raw · Foundation · protein 6.62 g
+/api/nutrition?id=palm-sugar → empty · totalHits 0
+/                            → 200
+```
+
+and the working tree contains no corrupted key site. The history shows each break immediately
+followed by its revert, which is a stronger claim than a tidy diff would have been.
+
+**One thing the breaks caught that was not about the product.** Reading the screen after the first
+revert, the panel still said "refused", and the first explanation reached for was edge caching. The server
+was fine; my test script used `?.click()` throughout, the page was already on a screen where none
+of those elements existed, every step no-opped silently, and what got read was a panel left sitting
+in the DOM since the break. Optional chaining turned three failures into no output at all. The
+re-run asserts each step and prints whether it found the element.
 
 ## B4 · A near miss is never dressed as an answer — **Met, and it was not met this morning**
 
@@ -523,7 +518,7 @@ GET 2 → X-Vercel-Cache: HIT
 GET 3 → X-Vercel-Cache: HIT
 ```
 
-I nearly recorded this as a failure. A first check with `curl -I` showed `Cache-Control: public`
+This was nearly recorded as a failure. A first check with `curl -I` showed `Cache-Control: public`
 with the directives apparently stripped and `MISS` on every request, and I had the beginning of a
 theory about Vercel rewriting the header. The directives are stripped from what reaches the browser
 because they are CDN instructions the CDN has already consumed, and `HEAD` requests are not served
@@ -551,7 +546,7 @@ inject with. Upstream calls are bounded at 93 distinct queries, all cacheable.
 ?ingredient=chicken%20breast   → 400 bad-request
 ```
 
-**Still partly met, because of something I did to my own site.** An audit I ran against the live URL
+**Still partly met, because of something done to my own site while checking it.** An audit run against the live URL
 sent enough probe traffic — long parameters, null bytes, array-shaped parameters, repeated bundle
 downloads — to trip Vercel's attack mitigation. For several minutes the site answered every visitor
 with `HTTP 403` and a page titled "Vercel Security Checkpoint". It cleared on its own.
@@ -635,11 +630,11 @@ asking for thoroughness.
 
 Two smaller losses, both mine, both the same shape:
 
-- I checked the cache with `curl -I` and read `Cache-Control: public` with the directives gone and
-  `MISS` on every request. I had a theory about Vercel rewriting headers and was a minute from
+- The cache was checked with `curl -I`, which showed `Cache-Control: public` with the directives gone and
+  `MISS` on every request. A theory about Vercel rewriting headers was already forming, a minute from
   changing the function. `HEAD` requests are not served from that cache and the directives are
   stripped because the CDN has already consumed them. A `GET` shows `MISS, HIT, HIT`. Re-measuring
-  cost thirty seconds; the fix I nearly made would have cost an hour and broken a working cache.
+  cost thirty seconds; the fix nearly made would have cost an hour and broken a working cache.
 - A responsiveness check reported horizontal overflow on all three screens. `clientWidth` was
   returning 0, so every element was "wider than the viewport". The real answer is zero overflow at
   375 pixels.
@@ -660,7 +655,7 @@ branch to `totalHits === 0`, as the scout's report invited, would have shipped d
 never fire, and ingredients like galangal and shrimp paste would have printed an unrelated food's
 figures under a USDA citation.
 
-I did not catch that. A second agent did, because its only instruction was to refute the first.
+Neither I nor the first agent caught that. A second one did, because its only instruction was to refute the first.
 
 **The second one got past everybody, including me.** With `requireAllWords=true` in place, the key
 installed, and the panel working, the first real call to the live endpoint returned:
@@ -674,9 +669,9 @@ manufacturer label rounded protein to zero on a small serving, which FoodData Ce
 to 100 g. Status 200. A genuine USDA record. A genuine record id. A citation on screen. And a
 number that is simply wrong.
 
-**How long it took to notice: about four seconds, and it should have been never.** I read the
-response because it was the first one after the credential went in, and I looked at the protein
-figure because that is the field the panel exists to show. Had I checked with an ingredient whose
+**How long it took to notice: about four seconds, and it should have been never.** The response was
+read because it was the first one after the credential went in, and the protein figure was the one
+looked at because that is the field the panel exists to show. Had the check used an ingredient whose
 correct value I do not carry in my head — palm sugar, galangal, light soy sauce — I would have seen
 a plausible number, ticked the criterion, and shipped it.
 
@@ -741,7 +736,7 @@ Nobody decided that. It arrived as a branch on a status code — production work
 kind I had no reason to inspect. But **who gets blamed when the product fails is a decision about
 the product**, not about the code. It matters because the two situations have different owners: a
 refusal is the provider's problem and a 404 on my own address is a deployment fault of mine, and
-the screen was pointing at somebody else while I looked for it. It cost nothing at the time and it
+the screen was pointing at somebody else while the fault sat at our own end. It cost nothing at the time and it
 would have cost an evening on the night it mattered.
 
 That is the boundary moving without anybody noticing it move, and it is worth more to me than the
@@ -764,8 +759,11 @@ person who knows what the number should be, looking at the number.
 I would put the review step **at the point where a value first reaches a screen**, not at merge.
 Every defect worth catching here was invisible in the diff and obvious in the response: the garlic
 record is correct code reading a correct field from a real provider. A reviewer reading the pull
-request would have approved it, and did, in the sense that I read it myself and approved it. So the
-artefact under review has to be the rendered output beside the real source, not the patch.
+request would have approved it — and one effectively did, in that I authorised the push without
+reading the diff, which is the honest description of what a standing approval is. That is the
+scaling problem in miniature: my review step was real and it was not a read. So the artefact under
+review has to be the rendered output beside the real source, not the patch, because a patch review
+is the thing that degrades first when there are thirty of them a day.
 
 I would refuse to let an agent settle two things. **What the user is told when the system fails**,
 because that decision arrives disguised as error handling and is the whole of the product on the
