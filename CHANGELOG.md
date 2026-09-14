@@ -96,7 +96,8 @@ when that somebody is not answering.*
 - **`/api/nutrition` was an open proxy over a metered credential.** It took arbitrary text and
   passed it upstream; Vercel's edge cache keys on the full URL, so a stranger varying the parameter
   missed the cache every time and spent a slice of an hourly quota of 1,000. It now takes an
-  ingredient id validated against the catalogue before the credential is read, which also means no
+  ingredient id validated against the catalogue before the credential is sent anywhere, which also
+  means no
   caller-supplied text reaches the upstream query string at all. Bounded at 93 cacheable queries.
 
 ### Note on what this version cost to verify

@@ -254,7 +254,7 @@ So the live figure sits beside the invented one and says which is which. The rea
 comparison; the ranking stays computable from data in this repository, and stays explainable with
 the provider switched off.
 
-**What that costs, stated plainly.** The product now shows one real nutrition figure and 46 meals'
+**What that costs, stated plainly.** The product now shows one real nutrition figure and all 47 meals'
 worth of invented macros, and the honest description of that is a provenance feature rather than a
 nutrition feature. `assessment.md` marks it as such.
 

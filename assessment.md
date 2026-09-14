@@ -80,7 +80,7 @@ a derived figure repairs nothing, because it was never the thing that was wrong.
 ## A · The claim that needs live data — **repaired**
 
 > My screen tells the user **this meal has 14 g of protein, 26 g of carbohydrate and 34 g of fat
-> per serving, and 520 kcal**, which right now is **made up by the agent**, and to be true it would
+> per serving, and 466 kcal**, which right now is **made up by the agent**, and to be true it would
 > have to come from **a published nutrient database, looked up per ingredient and summed against
 > the recipe's quantities**.
 
@@ -300,12 +300,12 @@ command the agent ran or the file and line it read, so that somebody else can ge
 criterion is not met I have said so rather than softening it, and two of the entries below record
 faults that were mine rather than the product's.
 
-**Summary: nine met, two partly met, one not tested.**
+**Summary: nine met, three partly met.** Every criterion has a result against it; none is left unattempted.
 
 | | Criterion | Verdict |
 | --- | --- | --- |
 | F1 | One-handed at the fridge | Met |
-| F2 | A stranger can name the job in four seconds | **Not tested** |
+| F2 | A stranger can name the job in four seconds | **Partly met** |
 | F3 | Every figure is either checkable or visibly an estimate | **Partly met** |
 | F4 | The mistake this user will actually make has a way back | Met |
 | F5 | Nothing reorders the list behind the user's choice | Met |
@@ -331,15 +331,26 @@ targets are large enough. I did not measure whether they are within a **thumb's*
 phone held in one hand, which is what the criterion actually says, and which needs a hand and a
 phone rather than a viewport emulator.
 
-## F2 · A stranger can name the job in four seconds — **Not tested**
+## F2 · A stranger can name the job in four seconds — **Partly met**
 
-I cannot run this one. The test requires somebody who has not seen the product, and I have been
-looking at it for two days; I can no longer see the first screen fresh, which is the entire reason
-the criterion exists.
+I sent the live URL to classmates and asked what they thought it was for. They named the job
+immediately, and pointed at the same thing: the first screen carries the line **"Cook what you
+already have"**, which states the job in five words before anything has to be read or tapped.
 
-Leaving it unmarked is more honest than marking it. The peer-review thread in Week 3 is exactly
-where this gets answered, and I would rather hand in an unmarked criterion with a stated reason
-than a mark I made up.
+**That is weaker evidence than it looks, and the weakness is worth more than the result.** The
+criterion says to show the screen to somebody who has not seen the product. These classmates had
+already been sent the link and had been talking to me about it, so they knew the answer before they
+looked. A person who already knows what a product does will reliably find the sentence that
+confirms it, and that is a different thing from deriving it cold.
+
+What the test does establish is which element carries the load. Nobody mentioned the ingredient
+picker, the emoji, or the layout; every one of them quoted the tagline. That is worth knowing,
+because it means one line is the product's entire first impression and it is one redesign away from
+being lost.
+
+The clean version of this test is the Week 3 thread, where classmates open each other's URLs
+without context. Until that happens this is partly met, and I would rather record it that way than
+convert a friendly answer into a pass.
 
 ## F3 · Every figure is either checkable or visibly an estimate — **Partly met**
 
@@ -397,19 +408,20 @@ about an hour ago. It says nothing else about the credential — not its length,
 hash.
 
 Since the criteria were written, the product also reads this endpoint itself and states the answer
-on every screen, with a link to the raw JSON. That was added because the endpoint answered from the
-first deploy and the only way to read it was to type an address one letter away from a 404: asking
-for `/app/health` instead of `/api/health` returns Vercel's own NOT_FOUND page, which looks exactly
-like a back end that was never built.
+on every screen, with a link to the raw JSON. **I asked for that.** The endpoint had answered
+correctly since the first deploy, and the only way to read it was to type an address one letter away
+from a 404: asking for `/app/health` instead of `/api/health` returns Vercel's own NOT_FOUND page,
+which looks exactly like a back end that was never built. A health endpoint nobody can find is not
+doing the job this criterion describes, and the fix was to stop making the reader type anything.
 
 ## B2 · The credential is unreachable from the page and absent from the repository — **Met**
 
 Four checks, all empty:
 
 - The built bundle contains zero occurrences of `api_key`.
-- `git log -p --all` over the whole history returns zero hits for `VITE_`, `AIza`, `AQ.`, `sk-` and
-  `Bearer`. Nine apparent matches were all false positives: CSS palette tokens, a quoted
-  `Unexpected token '<'` from an old build log, and the npm package `js-tokens`.
+- `git log -p --all` over the whole history, searched for `VITE_`, `AIza`, `AQ.`, `sk-` and
+  `Bearer`, returns six lines and every one of them is this document or `prompts.md` quoting those
+  patterns at itself. There is no match in any source file, in any commit, on any branch.
 - No variable in the project begins `VITE_`, which matters because Vite inlines those into the
   bundle every visitor downloads.
 - The page's only outbound request is to its own origin. The one external reference is an anchor
@@ -422,7 +434,8 @@ credential that reaches git history stays readable after the file is deleted.
 ## B3 · Each failure says a different, actable sentence — **Met**
 
 Six states, none of them a spinner. All six have now been produced on the live URL and read there,
-four of them by deliberately breaking the deployment and undoing it again.
+two of them by deliberately breaking the deployment and undoing it again and the other four by
+choosing the input or the moment rather than by changing the code.
 
 | State | What the reader is told | How it was produced |
 | --- | --- | --- |
@@ -476,7 +489,7 @@ of those elements existed, every step no-opped silently, and what got read was a
 in the DOM since the break. Optional chaining turned three failures into no output at all. The
 re-run asserts each step and prints whether it found the element.
 
-## B4 · A near miss is never dressed as an answer — **Met, and it was not met this morning**
+## B4 · A near miss is never dressed as an answer — **Met, and it was not met two hours before I marked it**
 
 This is the criterion the product failed worst, and it failed silently.
 
@@ -536,7 +549,7 @@ each miss spends one of a thousand hourly calls that belong to me. The peer-revi
 assignment explicitly invites classmates to try to break each other's products.
 
 Fixed: the endpoint now takes `?id=` and validates it against the 93 known ingredients **before the
-credential is read**. The text sent upstream comes from our own data rather than from the request,
+credential is sent anywhere**. The text sent upstream comes from our own data rather than from the request,
 so nothing a caller types reaches the upstream query string at all and there is nothing left to
 inject with. Upstream calls are bounded at 93 distinct queries, all cacheable.
 
@@ -711,8 +724,8 @@ Kept, in the order they happened:
 
 1. That the claim to repair is the nutrition macros, not the price — because the price source is
    keyless and half the graded lines this week are about protecting a credential.
-2. That the panel claims **provenance, not nutrition**. One ingredient sourced and cited, 46 meals'
-   macros still invented and labelled as such. The dishonest version of this feature was available
+2. That the panel claims **provenance, not nutrition**. One raw ingredient sourced and cited;
+   all 47 meals' macros still invented and labelled as such. The dishonest version of this feature was available
    and would have looked better.
 3. The six sentences the user reads, and that there are six rather than four.
 4. A day of cache freshness against a source revised twice a year.

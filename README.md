@@ -104,7 +104,7 @@ output directory `dist`).
 | File | What it contains |
 | --- | --- |
 | `api/health.js` | **Serverless function.** Reports whether `USDA_API_KEY` is configured and what the upstream answered, and nothing further about the credential. `Cache-Control: no-store`, because the answer is about now. |
-| `api/nutrition.js` | **Serverless function.** Takes a known ingredient id, validated against the catalogue before the credential is read, and returns one USDA FoodData Central record. Restricted to analysed reference records, with `requireAllWords=true` so a miss is an honest empty rather than an unrelated food. |
+| `api/nutrition.js` | **Serverless function.** Takes a known ingredient id, validated against the catalogue before the credential is sent anywhere, and returns one USDA FoodData Central record. Restricted to analysed reference records, with `requireAllWords=true` so a miss is an honest empty rather than an unrelated food. |
 | `index.html` | Vite entry page with the `#root` mount point. |
 | `package.json` | React 18 + Vite dependencies and the `dev` / `build` / `preview` scripts. |
 | `vite.config.js` | Standard Vite + React plugin config. |

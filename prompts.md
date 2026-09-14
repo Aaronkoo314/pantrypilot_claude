@@ -671,9 +671,11 @@ after, because a credential that reaches git history stays readable after the fi
 scanners read fresh public commits within minutes.
 
 Verified rather than assumed: `git log -p --all` over the full history returns zero hits for
-`VITE_`, `AIza`, `AQ.`, `sk-` and `Bearer`. Nine apparent matches were all false positives — CSS
-palette tokens, a quoted syntax error from an old build log, and the npm package `js-tokens`. No
-history rewrite was needed. That is a checkable claim rather than a reassuring one.
+`VITE_`, `AIza`, `AQ.`, `sk-` and `Bearer`. The search returns six lines and every one is this log
+or `assessment.md` quoting those patterns at itself; there is no match in any source file, in any
+commit, on any branch. No history rewrite was needed. That is a checkable claim rather than a
+reassuring one, and I would rather state the number I can reproduce today than one I wrote down
+once and never re-ran.
 
 The `PROMPTS.md` to `prompts.md` rename needed a temporary name in between, because
 `core.ignorecase` is true in this repository: a direct case-only `git mv` no-ops locally and then
