@@ -1728,3 +1728,10 @@ button {
   color: var(--ink);
   font-size: 13px;
 }
+
+/* The third-party notice. Quieter than the sourcing line above it, but not
+   hidden: it is the only place a visitor is told what is recording them. */
+.privacy-note {
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+}

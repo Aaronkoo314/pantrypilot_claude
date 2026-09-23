@@ -30,6 +30,30 @@ export default function SiteFooter() {
         here is health, dietary or medical advice, no price is a real price, and no shop is named or
         implied.
       </p>
+      {/* Both third parties, named together, on every screen. Splitting them —
+          Clarity here, Disqus beside the comment box — would mean a visitor who
+          never opens the comments never reads half of it. */}
+      <p className="privacy-note">
+        This page uses Microsoft Clarity and Disqus, which use cookies to record how visitors use
+        the site and to host comments. By using this page you agree that we and Microsoft may
+        collect and use this data. See the{' '}
+        <a
+          href="https://www.microsoft.com/privacy/privacystatement"
+          target="_blank"
+          rel="noreferrer"
+        >
+          Microsoft Privacy Statement
+        </a>
+        , the{' '}
+        <a href="https://disqus.com/privacy-policy/" target="_blank" rel="noreferrer">
+          Disqus privacy policy
+        </a>{' '}
+        and the{' '}
+        <a href="https://disqus.com/data-sharing-settings/" target="_blank" rel="noreferrer">
+          Disqus data sharing settings
+        </a>
+        .
+      </p>
     </footer>
   );
 }

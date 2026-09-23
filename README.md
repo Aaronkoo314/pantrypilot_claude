@@ -88,11 +88,14 @@ output directory `dist`).
   `process.env.USDA_API_KEY` inside `api/`, and is in no browser code and no commit. Nothing in
   this project is named with a `VITE_` prefix, because Vite writes those into the bundle every
   visitor downloads.
-- **One third-party embed, on the first screen only.** The feedback thread at the bottom of the
-  setup screen is Disqus, loaded from `aaronkoojy.disqus.com`. It is the only script the page
-  fetches from anywhere but its own origin, it carries no credential of ours, and it is pinned to a
-  single thread so all feedback lands in one place. Disqus sets its own cookies and receives the
-  page address; nothing else is sent to it.
+- **Two third parties, both named in the footer of every screen.** *Disqus* hosts the feedback
+  thread that sits collapsed at the bottom of each page; its script is fetched only when a visitor
+  opens it, and it is pinned to one thread so all feedback lands in the same place. *Microsoft
+  Clarity* records how visitors use the site, and runs **only** when the hostname is exactly
+  `pantrypilot-phi.vercel.app` — not on localhost, not on preview builds, not on the
+  per-deployment address. Both set their own cookies. Neither carries any credential of ours. The
+  footer notice names both and links to Microsoft's privacy statement and to Disqus's policy and
+  data-sharing settings.
 - **Everything else is still invented** and lives in `src/data/pantryData.js`. The app says so on
   screen, next to the one figure that is not.
 - No real brands, restaurants, shops or delivery services are referenced.
@@ -111,7 +114,7 @@ output directory `dist`).
 | --- | --- |
 | `api/health.js` | **Serverless function.** Reports whether `USDA_API_KEY` is configured and what the upstream answered, and nothing further about the credential. `Cache-Control: no-store`, because the answer is about now. |
 | `api/nutrition.js` | **Serverless function.** Takes a known ingredient id, validated against the catalogue before the credential is sent anywhere, and returns one USDA FoodData Central record. Restricted to analysed reference records, with `requireAllWords=true` so a miss is an honest empty rather than an unrelated food. |
-| `index.html` | Vite entry page with the `#root` mount point. |
+| `index.html` | Vite entry page with the `#root` mount point, and the Microsoft Clarity tag, gated to the live hostname. |
 | `package.json` | React 18 + Vite dependencies and the `dev` / `build` / `preview` scripts. |
 | `vite.config.js` | Standard Vite + React plugin config. |
 | `src/main.jsx` | Mounts `<App />` into `#root` and loads the stylesheet. |
