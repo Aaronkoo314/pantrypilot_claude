@@ -1593,3 +1593,21 @@ button {
   font-weight: 700;
   letter-spacing: 0.01em;
 }
+
+/* ---------------- comments ----------------
+   Sits below the stepped setup, above the footer. It needs its own bottom
+   padding because the fixed step bar covers the last 80px of the page. */
+
+.comments {
+  margin: 20px 16px 0;
+  padding: 16px 14px 96px;
+  border-top: 1px solid var(--line);
+}
+
+.comments .section-title {
+  margin-top: 0;
+}
+
+.comments #disqus_thread {
+  margin-top: 14px;
+}

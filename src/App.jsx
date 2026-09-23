@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import SplashScreen from './components/SplashScreen.jsx';
 import ServiceStatus from './components/ServiceStatus.jsx';
+import DisqusThread from './components/DisqusThread.jsx';
 import SiteFooter from './components/SiteFooter.jsx';
 import MealSetup from './components/MealSetup.jsx';
 import MealRecommendations from './components/MealRecommendations.jsx';
@@ -187,6 +188,10 @@ export default function App() {
         resultCount={counts.setupTotal}
         readyCount={counts.readyForSetup}
       />
+      {/* Setup screen only. Mounting it on all three would split the feedback
+          across three Disqus threads, or — with a fixed identifier — draw the
+          same thread three times on one page. */}
+      <DisqusThread />
       <SiteFooter />
     </>
   );

@@ -82,11 +82,17 @@ output directory `dist`).
   database, no accounts and no analytics. `api/nutrition.js` asks USDA FoodData Central for one
   ingredient's published nutrient record; `api/health.js` reports whether the credential is
   configured and what the upstream answered.
-- **One outbound call, and it happens on the server.** The page talks only to its own origin.
+- **The credential never leaves the server.** The only call that carries it happens inside `api/`,
+  and the page makes no request to USDA itself.
   The credential lives in a Vercel environment variable named `USDA_API_KEY`, is read only as
   `process.env.USDA_API_KEY` inside `api/`, and is in no browser code and no commit. Nothing in
   this project is named with a `VITE_` prefix, because Vite writes those into the bundle every
   visitor downloads.
+- **One third-party embed, on the first screen only.** The feedback thread at the bottom of the
+  setup screen is Disqus, loaded from `aaronkoojy.disqus.com`. It is the only script the page
+  fetches from anywhere but its own origin, it carries no credential of ours, and it is pinned to a
+  single thread so all feedback lands in one place. Disqus sets its own cookies and receives the
+  page address; nothing else is sent to it.
 - **Everything else is still invented** and lives in `src/data/pantryData.js`. The app says so on
   screen, next to the one figure that is not.
 - No real brands, restaurants, shops or delivery services are referenced.
@@ -121,5 +127,6 @@ output directory `dist`).
 | `src/components/MealDetail.jsx` | Screen 3. Tag row, serving control, have / need ingredient lists with per-line prices, times, cost, nutrition per serving and whole dish, steps and the back button. |
 | `src/components/SourcedNutrition.jsx` | The one panel whose numbers are not ours. Calls `/api/nutrition`, cites the record, and says six different things across loading, empty, refused, unreachable, no credential and our own service being down. |
 | `src/components/SiteFooter.jsx` | The standing credit to USDA FoodData Central, on every screen rather than only where a lookup succeeded, plus the standing statement that everything else is invented. |
+| `src/components/DisqusThread.jsx` | The feedback thread at the bottom of the first screen. Loads the Disqus script once per page load and calls `DISQUS.reset` when the screen re-mounts, with `page.identifier` fixed to `home` so every visitor writes into one thread. |
 | `src/components/ServiceStatus.jsx` | The standing status row on every screen. Reads `/api/health` on mount and every minute, states in one line whether the live lookup is working, and links to the raw endpoint. |
 | `src/styles.css` | All styling. Mobile-first, warm palette, 48px touch targets on the primary controls; the compact "Clear all" (32px) and the second-level group headers (44px) are the two deliberate exceptions. |
