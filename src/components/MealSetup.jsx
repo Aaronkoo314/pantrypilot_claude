@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import IngredientPicker from './IngredientPicker.jsx';
+import DisqusThread from './DisqusThread.jsx';
 import {
   CUISINE_OPTIONS,
   INGREDIENT_BY_ID,
@@ -11,10 +12,19 @@ import {
 const MIN_PEOPLE = 1;
 const MAX_PEOPLE = 12;
 
-/** Five ingredient categories, then the four questions that are not about ingredients. */
+/**
+ * Five ingredient categories, then the four questions that are not about
+ * ingredients, split across two pages.
+ *
+ * The split is by what the question is about rather than by count: how many
+ * people and how long you have are facts about tonight, and cuisine and
+ * heaviness are preferences. Putting all four on one page made it 1522px, the
+ * longest page in the flow by a third.
+ */
 const STEPS = [
   ...INGREDIENT_CATEGORIES.map((category) => ({ kind: 'category', category })),
-  { kind: 'questions' },
+  { kind: 'practical', title: 'How many, and how long?', sub: 'Two facts about tonight.' },
+  { kind: 'taste', title: 'What sort of thing?', sub: 'Both are optional. Leave them off for everything.' },
 ];
 
 /**
@@ -46,6 +56,13 @@ export default function MealSetup({ setup, onChange, onFindMeals, resultCount, r
   const step = STEPS[stepIndex];
   const isLast = stepIndex === STEPS.length - 1;
   const mealWord = resultCount === 1 ? 'meal' : 'meals';
+
+  // Every move lands at the top. Without this, tapping Next from halfway down
+  // a long category drops you halfway down the next one, which reads as the
+  // page having failed to change.
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [stepIndex]);
 
   function goTo(index) {
     setStepIndex(index);
@@ -152,12 +169,10 @@ export default function MealSetup({ setup, onChange, onFindMeals, resultCount, r
           {stepIndex + 1} of {STEPS.length}
         </p>
         <h1 className="step-title">
-          {step.kind === 'category' ? step.category : 'A few last questions'}
+          {step.kind === 'category' ? step.category : step.title}
         </h1>
         <p className="step-sub">
-          {step.kind === 'category'
-            ? 'Tap everything you have.'
-            : 'These narrow the list. None of them is required.'}
+          {step.kind === 'category' ? 'Tap everything you have.' : step.sub}
         </p>
       </header>
 
@@ -172,6 +187,8 @@ export default function MealSetup({ setup, onChange, onFindMeals, resultCount, r
         />
       ) : (
         <div className="step-body">
+          {step.kind === 'practical' && (
+            <>
           <section className="card" aria-labelledby="people-heading">
             <h2 id="people-heading" className="section-title">
               How many people?
@@ -224,6 +241,11 @@ export default function MealSetup({ setup, onChange, onFindMeals, resultCount, r
             </div>
           </section>
 
+            </>
+          )}
+
+          {step.kind === 'taste' && (
+            <>
           <section className="card" aria-labelledby="cuisine-heading">
             <h2 id="cuisine-heading" className="section-title">
               What are you in the mood for?
@@ -247,6 +269,8 @@ export default function MealSetup({ setup, onChange, onFindMeals, resultCount, r
             </p>
             {renderMultiSelect('weightBands', WEIGHT_BANDS, weightBands)}
           </section>
+            </>
+          )}
         </div>
       )}
 
@@ -298,6 +322,8 @@ export default function MealSetup({ setup, onChange, onFindMeals, resultCount, r
           </ul>
         )}
       </section>
+
+      <DisqusThread />
 
       <div className="step-bar">
         {stepIndex > 0 && (

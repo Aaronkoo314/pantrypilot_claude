@@ -1,10 +1,30 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { CUISINE_BY_ID, WEIGHT_BAND_BY_ID } from '../data/pantryData.js';
 import { formatMinutes, formatPrice, scaleMeal } from '../utils/mealMatching.js';
 import SourcedNutrition from './SourcedNutrition.jsx';
+import DisqusThread from './DisqusThread.jsx';
 
 const MIN_SERVINGS = 1;
 const MAX_SERVINGS = 12;
+
+/**
+ * The detail screen's sections, one per page.
+ *
+ * Serving size and Time share a page. Alone they are 222px and 128px, and a
+ * page you finish before the scroll starts is a tap charged for nothing.
+ *
+ * The index at the top is a row of names rather than a progress bar, because
+ * reading a recipe is not a task with an order: somebody at the stove wants
+ * the steps, somebody in the shop wants the cost, and neither should have to
+ * page through the other.
+ */
+const PAGES = [
+  { id: 'basics', label: 'Servings & time' },
+  { id: 'ingredients', label: 'Ingredients' },
+  { id: 'cost', label: 'Cost' },
+  { id: 'nutrition', label: 'Nutrition' },
+  { id: 'steps', label: 'How to cook it' },
+];
 
 /**
  * Screen 3: everything the user needs to actually cook the meal,
@@ -14,6 +34,14 @@ export default function MealDetail({ meal, ownedIds, initialServings, onBack }) 
   const [servings, setServings] = useState(
     Math.min(MAX_SERVINGS, Math.max(MIN_SERVINGS, initialServings))
   );
+  const [pageIndex, setPageIndex] = useState(0);
+
+  // Every move lands at the top. Arriving halfway down a new page is the
+  // commonest complaint about paginated reading, and it reads as a broken jump
+  // rather than as a scroll position that happened to be kept.
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pageIndex]);
 
   const owned = useMemo(() => new Set(ownedIds), [ownedIds]);
   const scaled = useMemo(() => scaleMeal(meal, servings), [meal, servings]);
@@ -28,6 +56,8 @@ export default function MealDetail({ meal, ownedIds, initialServings, onBack }) 
   function stepServings(delta) {
     setServings((current) => Math.min(MAX_SERVINGS, Math.max(MIN_SERVINGS, current + delta)));
   }
+
+  const page = PAGES[pageIndex].id;
 
   function ingredientRow(line, kind) {
     return (
@@ -46,7 +76,7 @@ export default function MealDetail({ meal, ownedIds, initialServings, onBack }) 
   }
 
   return (
-    <div className="screen">
+    <div className="screen screen-stepped">
       <header className="app-header compact">
         <button type="button" className="back-button" onClick={onBack}>
           &larr; Back to meals
@@ -75,6 +105,23 @@ export default function MealDetail({ meal, ownedIds, initialServings, onBack }) 
         </div>
       </header>
 
+      {/* Names, not a progress bar: reading a recipe has no required order. */}
+      <nav className="page-index" aria-label="Recipe sections">
+        {PAGES.map((entry, index) => (
+          <button
+            key={entry.id}
+            type="button"
+            className={`page-tab ${index === pageIndex ? 'is-current' : ''}`}
+            aria-current={index === pageIndex ? 'page' : undefined}
+            onClick={() => setPageIndex(index)}
+          >
+            {entry.label}
+          </button>
+        ))}
+      </nav>
+
+      {page === 'basics' && (
+        <>
       <section className="card" aria-labelledby="servings-heading">
         <h2 id="servings-heading" className="section-title">
           Serving size
@@ -129,6 +176,10 @@ export default function MealDetail({ meal, ownedIds, initialServings, onBack }) 
         </dl>
       </section>
 
+        </>
+      )}
+
+      {page === 'ingredients' && (
       <section className="card" aria-labelledby="ingredients-heading-detail">
         <h2 id="ingredients-heading-detail" className="section-title">
           Ingredients for {servings} {servings === 1 ? 'serving' : 'servings'}
@@ -155,6 +206,9 @@ export default function MealDetail({ meal, ownedIds, initialServings, onBack }) 
         )}
       </section>
 
+      )}
+
+      {page === 'cost' && (
       <section className="card" aria-labelledby="cost-heading">
         <h2 id="cost-heading" className="section-title">
           Cost
@@ -176,6 +230,9 @@ export default function MealDetail({ meal, ownedIds, initialServings, onBack }) 
         </p>
       </section>
 
+      )}
+
+      {page === 'nutrition' && (
       <section className="card" aria-labelledby="nutrition-heading">
         <h2 id="nutrition-heading" className="section-title">
           Nutrition
@@ -233,6 +290,9 @@ export default function MealDetail({ meal, ownedIds, initialServings, onBack }) 
         <SourcedNutrition ingredients={scaled.ingredients} />
       </section>
 
+      )}
+
+      {page === 'steps' && (
       <section className="card" aria-labelledby="steps-heading">
         <h2 id="steps-heading" className="section-title">
           How to cook it
@@ -249,10 +309,34 @@ export default function MealDetail({ meal, ownedIds, initialServings, onBack }) 
         </ol>
       </section>
 
-      <div className="sticky-bar">
-        <button type="button" className="primary-button" onClick={onBack}>
-          Back to meals
-        </button>
+      )}
+
+      <DisqusThread />
+
+      <div className="step-bar">
+        {pageIndex > 0 && (
+          <button
+            type="button"
+            className="secondary-button step-back"
+            onClick={() => setPageIndex(pageIndex - 1)}
+          >
+            Back
+          </button>
+        )}
+        {pageIndex < PAGES.length - 1 ? (
+          <button
+            type="button"
+            className="primary-button step-next"
+            onClick={() => setPageIndex(pageIndex + 1)}
+          >
+            Next
+            <span className="button-note">{PAGES[pageIndex + 1].label}</span>
+          </button>
+        ) : (
+          <button type="button" className="primary-button step-next" onClick={onBack}>
+            Back to meals
+          </button>
+        )}
       </div>
     </div>
   );

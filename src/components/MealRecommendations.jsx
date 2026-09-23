@@ -1,4 +1,6 @@
+import { INGREDIENT_BY_ID } from '../data/pantryData.js';
 import FilterBar from './FilterBar.jsx';
+import DisqusThread from './DisqusThread.jsx';
 import MealCard from './MealCard.jsx';
 import { CUISINE_BY_ID, TIME_OPTIONS } from '../data/pantryData.js';
 
@@ -45,18 +47,49 @@ export default function MealRecommendations({
     },
   ].filter(Boolean);
 
+  const kitchen = setup.ingredientIds.map((id) => INGREDIENT_BY_ID[id]).filter(Boolean);
+
   return (
     <div className="screen">
       <header className="app-header compact">
-        <button type="button" className="back-button" onClick={onEditSetup}>
-          &larr; Change my kitchen
-        </button>
         <h1 className="app-title">Meals for tonight</h1>
         <p className="summary-line">
-          {setup.ingredientIds.length} ingredients &middot; {setup.people}{' '}
-          {setup.people === 1 ? 'person' : 'people'} &middot; {timeLabel} &middot; {cuisineLabel}
+          {setup.people} {setup.people === 1 ? 'person' : 'people'} &middot; {timeLabel} &middot;{' '}
+          {cuisineLabel}
         </p>
       </header>
+
+      {/* The kitchen, summarised. The old header had a "Change my kitchen" link
+          and a count, which told you how many ingredients you had picked but not
+          which — so checking meant leaving the screen. This shows them, and only
+          the people who want to change something go back into the picker. */}
+      <section className="kitchen-strip" aria-labelledby="kitchen-heading">
+        <div className="kitchen-head">
+          <h2 id="kitchen-heading" className="kitchen-label">
+            My kitchen
+            <span className="count-pill">{setup.ingredientIds.length}</span>
+          </h2>
+          <button type="button" className="text-button" onClick={onEditSetup}>
+            Edit
+          </button>
+        </div>
+        {kitchen.length === 0 ? (
+          <p className="kitchen-empty">
+            Nothing picked, so every meal shows what it would need.{' '}
+            <button type="button" className="text-button" onClick={onEditSetup}>
+              Add ingredients
+            </button>
+          </p>
+        ) : (
+          <ul className="kitchen-tags">
+            {kitchen.map((item) => (
+              <li key={item.id} className="kitchen-tag">
+                <span aria-hidden="true">{item.emoji}</span> {item.name}
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
 
       <FilterBar filters={filters} onChange={onFilterChange} counts={counts} />
 
@@ -96,6 +129,8 @@ export default function MealRecommendations({
         Nutrition figures and prices are invented sample data for this prototype. They are not
         health or medical advice, and they are not real shop prices.
       </p>
+
+      <DisqusThread />
     </div>
   );
 }

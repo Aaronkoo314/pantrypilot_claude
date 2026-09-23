@@ -1,29 +1,30 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 /**
- * One Disqus thread, on the main screen only.
+ * One Disqus thread, reachable from the bottom of every page, but closed until
+ * somebody asks for it.
  *
- * Three things have to be true for every visitor's comment to land in the same
- * conversation, and all three are decided here rather than left to Disqus's
- * defaults:
+ * It started open on every page and that undid the change it shipped alongside.
+ * The app had just been split into short pages; the embed is about 925px, which
+ * on the recipe steps page was 34% of the height and pushed every page in the
+ * flow past the longest page the split had been made to eliminate. A row of
+ * twelve pages each carrying a thousand pixels of comment box is a longer app
+ * than the one page it replaced.
  *
- *   1. page.identifier is the fixed string "home". Disqus keys a thread on the
- *      identifier, so a fixed one means one thread forever.
- *   2. page.url is the full live https address with no query string. Without
- *      this, Disqus infers the URL from the browser — which on a preview
- *      deployment, on localhost, or on the per-deployment *.vercel.app hash
- *      address would each create a separate thread that nobody else can see.
- *   3. The script is injected once per page load. React re-renders this
- *      component on every state change on the setup screen, and appending the
- *      script again would load Disqus repeatedly.
+ * So the invitation is one line and the thread loads on the first tap. Three
+ * things follow from that and each is deliberate:
  *
- * Re-mounting is a separate problem from re-rendering. This screen unmounts
- * when the user goes to the meal list and mounts again when they come back, by
- * which point the script is already loaded and would do nothing on its own, so
- * DISQUS.reset is called to draw the thread into the new container.
+ *   - The script is fetched the first time anybody opens it, not on page load.
+ *     Most visitors never open it and should not pay for it.
+ *   - It closes again when the page changes. Keeping it open would re-init
+ *     Disqus on every Next, which is three iframes per tap.
+ *   - page.identifier is the fixed string "home" and page.url is the full live
+ *     https address, so every comment lands in the same thread wherever it was
+ *     written from. Without the pinned URL, localhost, a preview deployment and
+ *     the per-deployment *.vercel.app address would each open a thread nobody
+ *     else can see.
  *
- * No package was added. Disqus ships a plain script tag; a React wrapper would
- * be a dependency to do what fifteen lines do here.
+ * No package was added. Disqus ships a plain script tag.
  */
 
 const SHORTNAME = 'aaronkoojy';
@@ -34,7 +35,11 @@ const PAGE_IDENTIFIER = 'home';
 let scriptRequested = false;
 
 export default function DisqusThread() {
+  const [open, setOpen] = useState(false);
+
   useEffect(() => {
+    if (!open) return;
+
     // Disqus reads this when it loads, and again on every reset.
     window.disqus_config = function disqusConfig() {
       this.page.url = PAGE_URL;
@@ -48,33 +53,51 @@ export default function DisqusThread() {
       script.setAttribute('data-timestamp', String(Date.now()));
       script.async = true;
       document.body.appendChild(script);
-      return undefined;
+      return;
     }
 
-    // Already loaded: the container below is new, so ask Disqus to redraw.
+    // Already loaded on an earlier page: the container below is new, so ask
+    // Disqus to draw into it.
     if (window.DISQUS && typeof window.DISQUS.reset === 'function') {
       window.DISQUS.reset({ reload: true, config: window.disqus_config });
     }
-    return undefined;
-  }, []);
+  }, [open]);
 
   return (
     <section className="comments" aria-labelledby="comments-heading">
-      <h2 id="comments-heading" className="section-title">
-        Tell me what worked and what did not
+      <h2 id="comments-heading" className="visually-hidden">
+        Feedback
       </h2>
-      <p className="section-hint">
-        One thread for the whole product. Say what you found useful, where you hesitated, and
-        anything that looked wrong.
-      </p>
-      <div id="disqus_thread" />
-      <noscript>
-        Comments need JavaScript.{' '}
-        <a href="https://disqus.com/?ref_noscript" rel="noreferrer">
-          Read them on Disqus
-        </a>{' '}
-        instead.
-      </noscript>
+      <button
+        type="button"
+        className="comments-toggle"
+        aria-expanded={open}
+        onClick={() => setOpen((value) => !value)}
+      >
+        <span className="comments-caret" aria-hidden="true">
+          {open ? '−' : '+'}
+        </span>
+        <span className="comments-invite">
+          {open ? 'Hide feedback' : 'Tell me what worked and what did not'}
+        </span>
+      </button>
+
+      {open && (
+        <div className="comments-body">
+          <p className="section-hint">
+            One thread for the whole product. Say what you found useful, where you hesitated, and
+            anything that looked wrong.
+          </p>
+          <div id="disqus_thread" />
+          <noscript>
+            Comments need JavaScript.{' '}
+            <a href="https://disqus.com/?ref_noscript" rel="noreferrer">
+              Read them on Disqus
+            </a>{' '}
+            instead.
+          </noscript>
+        </div>
+      )}
     </section>
   );
 }

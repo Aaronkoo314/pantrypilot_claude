@@ -1600,14 +1600,131 @@ button {
 
 .comments {
   margin: 20px 16px 0;
-  padding: 16px 14px 96px;
+  padding: 12px 0 96px;
   border-top: 1px solid var(--line);
 }
 
-.comments .section-title {
-  margin-top: 0;
+/* Closed, this is the whole thing: one row, roughly 48px. */
+.comments-toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: var(--tap);
+  padding: 0 4px;
+  border: 0;
+  background: none;
+  color: var(--paprika-dark);
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
 }
 
-.comments #disqus_thread {
+.comments-caret {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  border: 1.5px solid var(--line);
+  border-radius: 50%;
+  color: var(--ink-soft);
+  font-size: 15px;
+  font-weight: 400;
+  line-height: 19px;
+  text-align: center;
+}
+
+.comments-body {
+  padding-top: 6px;
+}
+
+.comments-body #disqus_thread {
   margin-top: 14px;
+}
+
+/* ---------------- recipe section index ---------------- */
+
+.page-index {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding: 10px 16px 4px;
+  -webkit-overflow-scrolling: touch;
+}
+
+.page-tab {
+  flex: 0 0 auto;
+  min-height: 36px;
+  padding: 6px 12px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--ink-soft);
+  font-family: inherit;
+  font-size: 14px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.page-tab.is-current {
+  border-color: var(--paprika);
+  background: var(--paprika);
+  color: #ffffff;
+  font-weight: 700;
+}
+
+/* ---------------- my kitchen, on the results screen ---------------- */
+
+.kitchen-strip {
+  margin: 0 16px 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+}
+
+.kitchen-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.kitchen-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.kitchen-empty {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.kitchen-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.kitchen-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 9px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--cream);
+  color: var(--ink);
+  font-size: 13px;
 }
