@@ -1584,3 +1584,12 @@ button {
   margin-bottom: 10px;
   border-bottom: 1px solid var(--line);
 }
+
+/* Page one only: the one sentence that says what this is. */
+.step-brand {
+  margin: 0 0 10px;
+  color: var(--paprika-dark);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}

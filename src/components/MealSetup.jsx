@@ -118,6 +118,18 @@ export default function MealSetup({ setup, onChange, onFindMeals, resultCount, r
   return (
     <div className="screen screen-stepped">
       <header className="step-header">
+        {/* Page one is where a stranger arrives, so it keeps the line that says
+            what the product is for. Splitting the setup into steps removed the
+            old page header, and with it the only sentence on the screen that
+            answered "what is this". Every classmate who was asked what the
+            product did quoted this line and nothing else, so it earns its
+            space here — and only here, because pages two to six are being read
+            by somebody who already knows. */}
+        {stepIndex === 0 && (
+          <p className="step-brand">
+            <span aria-hidden="true">&#127813;</span> PantryPilot — cook what you already have
+          </p>
+        )}
         <div className="step-progress" role="group" aria-label="Setup steps">
           {STEPS.map((entry, index) => {
             const label = entry.kind === 'category' ? entry.category : 'Last questions';
