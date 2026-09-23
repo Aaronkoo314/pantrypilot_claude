@@ -24,18 +24,34 @@ Built for MGMT 6110 Human-AI Collaboration, Singapore Management University.
 
 ## The user journey
 
-1. **Meal Setup** - tick the ingredients in your kitchen from 93, grouped and searchable, with
-   meat and pantry items on a second level; say how many people are eating; pick a time budget
-   (15 / 30 / 60+ minutes); and optionally narrow by cuisine (Chinese, Western, Thai) and by how
-   heavy you want it (Light, Medium, Heavy). Press **Find Meals**.
-2. **Meal Recommendations** - meal cards showing ingredient match, time, calories per person,
-   price per person and servings. Sort by match, time, calories or price, in either direction;
-   filter to vegetarian only, or to meals that need no extra shopping.
-3. **Meal Detail** - the full recipe: what you have, what you still need and what the missing
-   items cost, prep / cook / total time, price per person and for the whole dish, calories per
-   person and in total, protein / carbs / fat both per serving and for the whole dish, and a
-   serving-size control that rescales every quantity, every line price and the whole-dish totals
-   while price per person and calories per person stay fixed. Then the numbered steps.
+1. **Meal Setup, in seven steps** - one page at a time, with "1 of 7" and a seven-segment bar
+   above it. Every segment is a button, so nobody has to walk forward through pages they do not
+   care about, and Skip sits beside Next for a category you have nothing from.
+
+   Steps 1-5 are the five ingredient categories. A large flat category leads with the six
+   ingredients these recipes use most and hides the rest behind "See all"; a large grouped one
+   (Meat & Seafood) shows its second-level groups instead; a small one (Dairy & Eggs, seven items)
+   shows everything, because hiding the seventh behind a link costs a tap to reveal nothing.
+   Search reaches all 93 from any step. Step 6 asks how many people and how much time, step 7
+   asks about cuisine and how heavy — both optional.
+
+   What you have picked stays at the bottom of every step, each item removable, and **Clear all is
+   undoable**. Press **Find recipes**.
+2. **Meal Recommendations** - your kitchen is listed at the top, with an Edit link back into the
+   picker, so checking what you picked does not mean leaving the screen. Then meal cards showing
+   ingredient match, time, calories per person, price per person and servings. Sort by match,
+   time, calories or price, in either direction; filter to vegetarian only, or to meals that need
+   no extra shopping.
+3. **Meal Detail, in five pages** - Servings & time, Ingredients, Cost, Nutrition, How to cook it,
+   with a row of section names at the top to jump between them. The index is names rather than a
+   progress bar because reading a recipe has no required order: somebody at the stove wants the
+   steps and somebody in the shop wants the cost.
+
+   Between them: what you have, what you still need and what the missing items cost, prep / cook /
+   total time, price per person and for the whole dish, calories per person and in total, protein
+   / carbs / fat both per serving and for the whole dish, and a serving-size control that rescales
+   every quantity, every line price and the whole-dish totals while price per person and calories
+   per person stay fixed.
 
    Beneath the nutrition block sits **the one figure on the screen that is not ours**. Pick any
    ingredient in the recipe and PantryPilot fetches that ingredient's published nutrient record
@@ -50,8 +66,11 @@ reported the progress of a timer against itself and announced it to assistive te
 application starting, while nothing was loading. `assessment.md` section 1 has the reasoning.
 
 Time, cuisine and weight stay editable on screen 2, behind the "Time, cuisine and weight"
-disclosure, and edits there write back to screen 1. The Find Meals button carries a live count
-that moves as you tick ingredients.
+disclosure, and edits there write back to the setup steps. The Next button carries a live count of
+matching meals at every step.
+
+Moving between steps or recipe sections always lands at the top of the new page, and a collapsed
+feedback row sits at the bottom of every one of them.
 
 A status row sits above every screen saying whether the live lookup is working, with a link to
 `/api/health` for anyone who would rather read the raw answer than our summary of it.
@@ -122,14 +141,16 @@ output directory `dist`).
 | `src/App.jsx` | Root component. Holds setup, filter and screen state, computes the recommendation list, and switches between the three screens without reloading. |
 | `src/data/pantryData.js` | **All invented data except the sourced panel's figures:** 93 ingredients with unit, price and vegetarian flag, and 47 meals across three cuisines with quantities, servings, times, macros, difficulty and category. Calories, weight band, vegetarian status and price are derived here, never authored. |
 | `src/utils/mealMatching.js` | Pure logic: ingredient matching, filtering, sorting, serving scaling, pricing and formatting. |
-| `src/components/MealSetup.jsx` | Screen 1. People, time, cuisine and weight controls plus the Find Meals button. |
-| `src/components/IngredientPicker.jsx` | Screen 1's ingredient index: search, an echo of your picks, and collapsible categories with a second level for meat cuts and pantry cuisines, every header carrying item and selected counts. |
-| `src/components/MealRecommendations.jsx` | Screen 2. Setup summary, filter bar, result count, meal list and empty state. |
+| `src/components/MealSetup.jsx` | Screen 1, as a seven-step flow. Holds the step index, the jumpable progress bar, the picked-ingredient tray with its undoable Clear all, and the two pages of non-ingredient questions. |
+| `src/components/IngredientPicker.jsx` | One ingredient category per page. Chooses its own layout by size: most-used row plus "See all" for a large flat category, second-level groups for a large grouped one, everything for a small one. Search reaches all 93 from any page. |
+| `src/components/MealRecommendations.jsx` | Screen 2. The kitchen listed with an Edit link, setup summary, filter bar, result count, meal list and empty state. |
 | `src/components/FilterBar.jsx` | Sort dropdown with an ascending/descending control, the vegetarian and "only meals I can cook now" toggles, and a disclosure holding time, cuisine and weight. |
 | `src/components/MealCard.jsx` | One meal summary card: name, match line and meter, time, calories, price, servings, tags and missing ingredients. |
-| `src/components/MealDetail.jsx` | Screen 3. Tag row, serving control, have / need ingredient lists with per-line prices, times, cost, nutrition per serving and whole dish, steps and the back button. |
+| `src/components/MealDetail.jsx` | Screen 3, as five pages with a section index: Servings & time, Ingredients, Cost, Nutrition, How to cook it. |
 | `src/components/SourcedNutrition.jsx` | The one panel whose numbers are not ours. Calls `/api/nutrition`, cites the record, and says six different things across loading, empty, refused, unreachable, no credential and our own service being down. |
 | `src/components/SiteFooter.jsx` | The standing credit to USDA FoodData Central, on every screen rather than only where a lookup succeeded, plus the standing statement that everything else is invented. |
 | `src/components/DisqusThread.jsx` | The feedback thread at the bottom of the first screen. Loads the Disqus script once per page load and calls `DISQUS.reset` when the screen re-mounts, with `page.identifier` fixed to `home` so every visitor writes into one thread. |
+| `src/components/DisqusThread.jsx` | The collapsed feedback row at the bottom of every page. Fetches the Disqus script only when a visitor opens it, closes again on a page change, and pins `page.identifier` to `home` so every comment lands in one thread. |
+| `src/components/SiteFooter.jsx` | The standing source credit and the notice naming Microsoft Clarity and Disqus, on every screen. |
 | `src/components/ServiceStatus.jsx` | The standing status row on every screen. Reads `/api/health` on mount and every minute, states in one line whether the live lookup is working, and links to the raw endpoint. |
 | `src/styles.css` | All styling. Mobile-first, warm palette, 48px touch targets on the primary controls; the compact "Clear all" (32px) and the second-level group headers (44px) are the two deliberate exceptions. |

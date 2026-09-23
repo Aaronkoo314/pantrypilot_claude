@@ -2,8 +2,9 @@
 
 Every version of PantryPilot, newest first.
 
-The tag [`v1-submitted`](../../releases/tag/v1-submitted) marks the exact state handed in for
-MGMT 6110 Problem Set 1.
+The tags [`v1-submitted`](../../releases/tag/v1-submitted) and
+[`ps2-submitted`](../../releases/tag/ps2-submitted) mark the exact states handed in for MGMT 6110
+Problem Sets 1 and 2.
 
 **Which document describes which version:**
 
@@ -22,6 +23,93 @@ git checkout v1-submitted
 npm install
 npm run dev
 ```
+
+---
+
+## v4 — one page at a time, feedback, and analytics
+
+*Everything after the Problem Set 2 submission, tagged [`ps2-submitted`](../../releases/tag/ps2-submitted).
+Layout and instrumentation only: no ingredient, recipe or ranking rule changed.*
+
+### Changed
+
+- **Setup is seven steps** instead of one page. Five ingredient categories in order, then two
+  pages of questions — how many people and how long, then cuisine and how heavy. The categories
+  and their second-level groups are exactly as they were; only the layout moved.
+
+  Each page chooses its own shape by size. A large flat category leads with the six ingredients
+  these recipes use most and hides the rest behind "See all". A large grouped one shows its
+  second-level groups instead. A small one shows everything, because promoting six of seven items
+  and hiding the last behind a link costs a tap to reveal nothing.
+
+  Measured at 375px: 897–1102px per page, against a single page that was 1906px with every
+  category collapsed and unbounded once one was opened.
+
+- **The recipe screen is five pages** — Servings & time, Ingredients, Cost, Nutrition, How to cook
+  it — with a row of section names to jump between them. Names rather than a progress bar, because
+  reading a recipe has no required order: somebody at the stove wants the steps and somebody in
+  the shop wants the cost. It was 4747px, or 5.8 screens.
+
+- **The results screen lists your kitchen**, with an Edit link back into the picker. The header
+  used to carry a "Change my kitchen" link and a count, which said how many ingredients were
+  picked but not which, so checking meant leaving the screen.
+
+- Every move between steps or sections lands at the top of the new page.
+
+### Added
+
+- **A feedback thread**, collapsed at the bottom of every page, hosted by Disqus and pinned to one
+  thread by a fixed `page.identifier` and the live https URL — so a comment written from a preview
+  build or from localhost still lands in the same conversation.
+
+- **Microsoft Clarity**, in `index.html`, running only when the hostname is exactly
+  `pantrypilot-phi.vercel.app`.
+
+- **A notice in the footer of every screen** naming both third parties, with links to Microsoft's
+  privacy statement and to Disqus's policy and data-sharing settings.
+
+- **Clear all is undoable.** It was the only irreversible action in the product: fourteen
+  ingredients ticked, one mis-tap, everything gone. A confirmation was rejected in favour of an
+  undo — a dialog charges everybody a tap to protect the few who misfire.
+
+### Fixed
+
+- `.secondary-button` is `width: 100%` everywhere in the app, which inside the new flex button bar
+  pushed the primary button 67px off the right edge at 375px. Overriding the flex basis was not
+  enough; the width had to go too. Found by measuring, not by looking.
+
+- Splitting setup into steps replaced the old page header and with it **"Cook what you already
+  have"**, the only sentence on the first screen that said what the product was for — and the one
+  line every classmate quoted when asked what it did. Restored, on page one only.
+
+### Note on the feedback thread, because the first version undid the change it shipped with
+
+Mounted open on every page, the Disqus embed is about 925px — 34% of the recipe steps page — and
+it pushed all twelve pages to 1882–2087px, past the 1522px page the split had just been made to
+eliminate. Twelve pages each carrying a thousand pixels of comment box is a longer app than the
+one page it replaced.
+
+It is now a single row that loads on the first tap. Measured after browsing all seven setup steps
+with it closed: **zero requests to Disqus**. Most visitors never open it and should not pay for it.
+
+### Note on the hostname gate
+
+The Clarity check is an equality test rather than a suffix match on `.vercel.app`. This app is
+served from a per-deployment hash URL, a preview build for every branch, and localhost — and a
+suffix match would record all of them into the same project. What should reach Clarity is visitors
+using the product, not the author reloading it.
+
+### Still standing after this version
+
+- The sourced nutrition panel returns "Lunchmeat, chicken breast, sliced" for Chicken Breast with
+  all three macro values blank, and the function still reports `ok`. The product was correct at
+  `ps2-submitted`; USDA published a record in April 2026 that now outranks the raw-chicken one.
+  Nothing in this repository changed — the provider did.
+- `FilterBar.jsx` prints the weight bands as raw ids: `light + medium` where everywhere else reads
+  `Light` and `Medium`.
+- The empty-state buttons do not say how many meals each would bring back.
+- The difficulty tag is defined nowhere: two values across 47 meals, filtering nothing, sorting
+  nothing, published by no source.
 
 ---
 
