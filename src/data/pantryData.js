@@ -2000,3 +2000,52 @@ export const MEAL_BY_ID = MEALS.reduce((map, meal) => {
   map[meal.id] = meal;
   return map;
 }, {});
+
+/**
+ * How often each ingredient is actually used, counted across the 47 recipes.
+ *
+ * The step-by-step picker shows a short "most used" row at the top of a
+ * category before the full list. Which ingredients belong in that row is
+ * DERIVED from the recipes rather than authored, for the same reason calories
+ * and the vegetarian flag are: an authored "common" flag is forty opinions
+ * that nobody can check, and it drifts the moment a recipe changes.
+ */
+export const INGREDIENT_USE_COUNT = MEALS.reduce((counts, meal) => {
+  meal.ingredients.forEach((line) => {
+    counts[line.id] = (counts[line.id] || 0) + 1;
+  });
+  return counts;
+}, {});
+
+/**
+ * The most-used ingredients in a category, or null when counting cannot
+ * separate them.
+ *
+ * Meat & Seafood is the exception and it is an honest one: every recipe carries
+ * exactly one main protein, so the counts there top out at three with a
+ * four-way tie, and a "most used" row would be close to arbitrary — it would
+ * put Chickpeas and Red Lentils above Chicken Breast. That category has six
+ * second-level groups of its own, which separate its items far better than a
+ * frequency count does, so it gets no row and shows its groups instead.
+ */
+/** A category small enough that hiding part of it behind a link helps nobody. */
+export const SHOW_ALL_AT_OR_BELOW = 8;
+
+const MOST_USED_MIN_SPREAD = 4; // top count must beat the 6th by this much to be meaningful
+
+export function mostUsedIn(category, limit = 6) {
+  const ranked = INGREDIENTS.filter((item) => item.category === category)
+    .map((item) => ({ item, uses: INGREDIENT_USE_COUNT[item.id] || 0 }))
+    .sort((a, b) => b.uses - a.uses || a.item.name.localeCompare(b.item.name));
+
+  // A small category shows everything. Promoting six of seven items and hiding
+  // the seventh behind a link is worse than showing all seven: the link costs a
+  // tap and a decision to reveal almost nothing.
+  if (ranked.length <= SHOW_ALL_AT_OR_BELOW) return null;
+  if (ranked.length <= limit) return null; // nothing to hide, so nothing to promote
+  const spread = ranked[0].uses - ranked[limit - 1].uses;
+  if (spread < MOST_USED_MIN_SPREAD) return null; // counting does not discriminate here
+
+  return ranked.slice(0, limit).map((entry) => entry.item);
+}
+

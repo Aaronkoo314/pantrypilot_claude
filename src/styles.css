@@ -1373,3 +1373,214 @@ button {
 .site-footer a {
   color: var(--ink-soft);
 }
+
+/* ---------------- stepped setup ----------------
+   One category per page. The header and the button bar are the only things
+   that never move, so the user always knows where they are and how to leave. */
+
+.screen-stepped {
+  padding-bottom: 96px; /* clears the fixed button bar */
+}
+
+.step-header {
+  padding: 12px 16px 4px;
+}
+
+.step-progress {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 10px;
+}
+
+/* Every segment is a button: nobody should have to walk forward through pages
+   they do not care about. */
+.step-segment {
+  flex: 1;
+  height: 6px;
+  padding: 0;
+  border: 0;
+  border-radius: 3px;
+  background: var(--line);
+  cursor: pointer;
+}
+
+.step-segment.is-done {
+  background: var(--herb-soft);
+}
+
+.step-segment.is-current {
+  background: var(--paprika);
+}
+
+/* The bar is 6px, which is too small a tap target on its own. */
+.step-segment::before {
+  content: '';
+  display: block;
+  height: 32px;
+  margin-top: -13px;
+}
+
+.step-counter {
+  margin: 0;
+  color: var(--ink-faint);
+  font-size: 13px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.step-title {
+  margin: 2px 0 2px;
+  font-size: 26px;
+  line-height: 1.2;
+  color: var(--ink);
+}
+
+.step-sub {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 15px;
+}
+
+.step-body {
+  padding: 8px 16px 0;
+}
+
+.step-body .card {
+  margin-bottom: 12px;
+}
+
+.chip-big {
+  min-height: 56px;
+  font-size: 16px;
+}
+
+.see-all {
+  display: block;
+  margin: 12px auto 0;
+  padding: 10px 16px;
+  min-height: 44px;
+}
+
+/* ---- what you have, on every page ---- */
+
+.picked-tray {
+  margin: 16px 16px 0;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+}
+
+.picked-tray .picked-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.picked-tray .picked-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.picked-empty,
+.undo-note {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.picked-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.picked-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 32px;
+  padding: 4px 8px 4px 9px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--cream);
+  color: var(--ink);
+  font-family: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.picked-x {
+  color: var(--ink-faint);
+  font-size: 15px;
+  line-height: 1;
+}
+
+/* ---- the bar that never moves ---- */
+
+.step-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  gap: 8px;
+  padding: 10px 16px calc(10px + env(safe-area-inset-bottom, 0px));
+  border-top: 1px solid var(--line);
+  background: var(--surface);
+}
+
+/* .secondary-button is width:100% everywhere else in the app, which inside a
+   flex row pushes the primary button off the screen. Override the width, not
+   just the flex basis. */
+.step-bar .secondary-button {
+  flex: 0 0 auto;
+  width: auto;
+  min-height: var(--tap);
+  padding: 0 16px;
+  margin: 0;
+}
+
+/* Next carries the live count, so it takes the room the other two leave.
+   min-width:0 lets it shrink below the note's intrinsic width rather than
+   overflowing, and the note truncates instead of forcing the button wide. */
+.step-bar .step-next {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: var(--tap);
+  padding: 0 12px;
+}
+
+.step-bar .button-note {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (min-width: 620px) {
+  .step-bar {
+    justify-content: center;
+  }
+
+  .step-bar .step-next {
+    flex: 0 1 320px;
+  }
+}
+
+/* The shortcut row above a grouped category's own second level. */
+.most-used {
+  padding-bottom: 6px;
+  margin-bottom: 10px;
+  border-bottom: 1px solid var(--line);
+}

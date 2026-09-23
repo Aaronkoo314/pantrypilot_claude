@@ -1,79 +1,68 @@
 import { useMemo, useState } from 'react';
-import { INGREDIENTS, INGREDIENT_BY_ID, INGREDIENT_CATEGORIES } from '../data/pantryData.js';
+import {
+  INGREDIENTS,
+  INGREDIENT_BY_ID,
+  mostUsedIn,
+} from '../data/pantryData.js';
 
 /**
- * Section component: the ingredient list for "what do you have?".
+ * One category, one page.
  *
- * 93 ingredients, so the card is an index rather than a wall. Three things
- * carry it:
+ * This used to be the whole ingredient list on a single card: five collapsible
+ * categories, two of them with a second level, all on the setup screen. It
+ * worked, but it meant the setup screen grew every time the dataset did, and
+ * the user had no idea how much was left below the fold.
  *
- *   1. Search first. Someone at an open fridge knows what they are looking
- *      for; three letters beats opening five categories.
- *   2. What you have stays visible, at the top, where you can undo it.
- *   3. Categories collapse, and the two that need it have a second level -
- *      Meat & Seafood opens into Pork, Chicken, Beef, Lamb, Fish & Seafood and
- *      Plant Protein; Pantry & Flavour opens into Western, Chinese and Thai.
- *      Every header carries item and selected counts, so a closed card reads
- *      as an index rather than an empty one, and nobody has to scroll past
- *      twenty-six pantry items to reach the beef.
+ * Now the step controller in MealSetup hands this component one category at a
+ * time. What is on the page depends on how big the category is, because the
+ * same layout does not suit twenty-six items and seven:
+ *
+ *   - A large, flat category (Vegetables & Aromatics, Pantry & Flavour) leads
+ *     with the six ingredients its own recipes use most, then hides the rest
+ *     behind "See all". The six are DERIVED from the recipes, not authored.
+ *   - A large, grouped category (Meat & Seafood) shows its six second-level
+ *     groups instead. Counting cannot separate proteins — every recipe has
+ *     exactly one, so the counts tie at three — and a "most used" row there
+ *     would put Chickpeas above Chicken Breast.
+ *   - A small category (Dairy & Eggs, seven items) shows everything. Promoting
+ *     six and hiding the seventh behind a link costs a tap to reveal nothing.
+ *
+ * Search is the exception to all of it: it looks across all 93 ingredients
+ * regardless of which page you are on, because somebody at an open fridge
+ * knows what they are holding and should not have to work out which of six
+ * pages it lives on.
  */
-export default function IngredientPicker({ selectedIds, onToggle, onClear }) {
-  const [query, setQuery] = useState('');
-  const [openCategories, setOpenCategories] = useState([]);
+export default function IngredientPicker({ category, selectedIds, onToggle, query, onQuery }) {
+  const [expanded, setExpanded] = useState(false);
   const [openGroups, setOpenGroups] = useState([]);
 
   const searching = query.trim().length > 0;
 
-  const tree = useMemo(() => {
+  const searchHits = useMemo(() => {
     const needle = query.trim().toLowerCase();
-    const matches = (item) => !needle || item.name.toLowerCase().includes(needle);
+    if (!needle) return [];
+    return INGREDIENTS.filter((item) => item.name.toLowerCase().includes(needle));
+  }, [query]);
 
-    return INGREDIENT_CATEGORIES.map((category) => {
-      const all = INGREDIENTS.filter((item) => item.category === category);
-      const hits = all.filter(matches);
+  const all = useMemo(
+    () => INGREDIENTS.filter((item) => item.category === category),
+    [category]
+  );
 
-      // A category is grouped when its items declare a group.
-      const groupNames = [...new Set(all.map((item) => item.group).filter(Boolean))];
-      const groups = groupNames
-        .map((name) => {
-          const groupAll = all.filter((item) => item.group === name);
-          return {
-            name,
-            items: groupAll.filter(matches),
-            total: groupAll.length,
-            selected: groupAll.filter((item) => selectedIds.includes(item.id)).length,
-          };
-        })
-        .filter((group) => group.items.length > 0);
+  const mostUsed = useMemo(() => mostUsedIn(category), [category]);
 
-      return {
-        category,
-        grouped: groupNames.length > 0,
-        groups,
-        items: groupNames.length > 0 ? [] : hits,
-        total: all.length,
-        hitCount: hits.length,
-        selected: all.filter((item) => selectedIds.includes(item.id)).length,
-      };
-    }).filter((entry) => entry.hitCount > 0);
-  }, [query, selectedIds]);
+  const groupNames = useMemo(
+    () => [...new Set(all.map((item) => item.group).filter(Boolean))],
+    [all]
+  );
 
-  const selectedItems = selectedIds.map((id) => INGREDIENT_BY_ID[id]).filter(Boolean);
-
-  function toggleIn(setter, value) {
-    setter((current) =>
-      current.includes(value) ? current.filter((item) => item !== value) : [...current, value]
-    );
-  }
-
-  function renderChip(item) {
+  function renderChip(item, size) {
     const isSelected = selectedIds.includes(item.id);
     return (
       <button
         key={item.id}
         type="button"
-        className={`chip ${isSelected ? 'chip-on' : ''}`}
-        aria-label={item.name}
+        className={`chip ${size === 'big' ? 'chip-big' : ''} ${isSelected ? 'chip-on' : ''}`}
         aria-pressed={isSelected}
         onClick={() => onToggle(item.id)}
       >
@@ -85,109 +74,115 @@ export default function IngredientPicker({ selectedIds, onToggle, onClear }) {
     );
   }
 
-  function renderHeader({ label, open, count, selected, onClick, sub }) {
+  // ---- searching: one flat list across every category -------------------
+  if (searching) {
     return (
-      <button
-        type="button"
-        className={`group-header ${open ? 'group-open' : ''} ${sub ? 'group-header-sub' : ''}`}
-        aria-expanded={open}
-        onClick={onClick}
-        disabled={searching}
-      >
-        <span className="group-caret" aria-hidden="true">
-          {open ? '−' : '+'}
-        </span>
-        <span className="group-name">{label}</span>
-        <span className="group-count">
-          {count}
-          {selected > 0 && <span className="group-selected"> &middot; {selected} selected</span>}
-        </span>
-      </button>
+      <div className="step-body">
+        <SearchBox query={query} onQuery={onQuery} />
+        {searchHits.length === 0 ? (
+          <p className="empty-note">Nothing matches &ldquo;{query}&rdquo;.</p>
+        ) : (
+          <>
+            <p className="section-hint">
+              {searchHits.length} {searchHits.length === 1 ? 'match' : 'matches'} across all
+              categories. Tap to add without leaving this page.
+            </p>
+            <div className="chip-grid">{searchHits.map((item) => renderChip(item))}</div>
+          </>
+        )}
+      </div>
     );
   }
 
+  // ---- grouped category: its own second level is the index --------------
+  if (groupNames.length > 0) {
+    return (
+      <div className="step-body">
+        <SearchBox query={query} onQuery={onQuery} />
+        {/* A grouped category can still have a meaningful shortcut. Pantry &
+            Flavour does: olive oil and light soy sauce are in a quarter of the
+            recipes each, and making somebody open "Chinese" to reach soy sauce
+            costs a tap for no reason. Meat & Seafood does not, so mostUsedIn
+            returns null there and this row does not appear. */}
+        {mostUsed && (
+          <div className="most-used">
+            <p className="section-hint">The six these recipes use most.</p>
+            <div className="chip-grid">{mostUsed.map((item) => renderChip(item, 'big'))}</div>
+          </div>
+        )}
+        {groupNames.map((name) => {
+          const items = all.filter((item) => item.group === name);
+          const picked = items.filter((item) => selectedIds.includes(item.id)).length;
+          const open = openGroups.includes(name);
+          return (
+            <div className="ingredient-subgroup" key={name}>
+              <button
+                type="button"
+                className={`group-header ${open ? 'group-open' : ''}`}
+                aria-expanded={open}
+                onClick={() =>
+                  setOpenGroups((current) =>
+                    current.includes(name)
+                      ? current.filter((item) => item !== name)
+                      : [...current, name]
+                  )
+                }
+              >
+                <span className="group-caret" aria-hidden="true">
+                  {open ? '−' : '+'}
+                </span>
+                <span className="group-name">{name}</span>
+                <span className="group-count">
+                  {items.length} items
+                  {picked > 0 && <span className="group-selected"> &middot; {picked} selected</span>}
+                </span>
+              </button>
+              {open && <div className="chip-grid">{items.map((item) => renderChip(item))}</div>}
+            </div>
+          );
+        })}
+      </div>
+    );
+  }
+
+  // ---- flat category: most used first, the rest on request --------------
+  const showAll = !mostUsed || expanded;
+  const shown = showAll ? all : mostUsed;
+
   return (
-    <section className="card" aria-labelledby="ingredients-heading">
-      <div className="section-head">
-        <div>
-          <h2 id="ingredients-heading" className="section-title">
-            What do you have?
-          </h2>
-          <p className="section-hint">Search, or open a group to browse.</p>
-        </div>
-        <span className="count-pill" aria-live="polite">
-          {selectedIds.length}
-        </span>
-      </div>
-
-      <div className="search-row">
-        <input
-          className="search-input"
-          type="search"
-          value={query}
-          placeholder={`Search ${INGREDIENTS.length} ingredients`}
-          aria-label="Search ingredients"
-          onChange={(event) => setQuery(event.target.value)}
-        />
-      </div>
-
-      {/* Your picks, echoed. Tapping one here removes it. */}
-      {selectedItems.length > 0 && (
-        <div className="picked">
-          <div className="picked-head">
-            <span className="picked-label">In your kitchen</span>
-            <button type="button" className="text-button" onClick={onClear}>
-              Clear all
-            </button>
-          </div>
-          <div className="chip-grid picked-grid">{selectedItems.map(renderChip)}</div>
-        </div>
+    <div className="step-body">
+      <SearchBox query={query} onQuery={onQuery} />
+      {mostUsed && !expanded && (
+        <p className="section-hint">
+          The six these recipes use most. Tap &ldquo;See all&rdquo; for the other{' '}
+          {all.length - mostUsed.length}.
+        </p>
       )}
-
-      {tree.length === 0 && <p className="empty-note">Nothing matches &ldquo;{query}&rdquo;.</p>}
-
-      {tree.map((entry) => {
-        // A search opens whatever it found; browsing remembers what you opened.
-        const catOpen = searching || openCategories.includes(entry.category);
-        return (
-          <div className="ingredient-group" key={entry.category}>
-            {renderHeader({
-              label: entry.category,
-              open: catOpen,
-              count: searching ? `${entry.hitCount} of ${entry.total}` : `${entry.total} items`,
-              selected: entry.selected,
-              onClick: () => toggleIn(setOpenCategories, entry.category),
-              sub: false,
-            })}
-
-            {catOpen && !entry.grouped && (
-              <div className="chip-grid">{entry.items.map(renderChip)}</div>
-            )}
-
-            {catOpen &&
-              entry.grouped &&
-              entry.groups.map((group) => {
-                const key = `${entry.category}::${group.name}`;
-                const groupOpen = searching || openGroups.includes(key);
-                return (
-                  <div className="ingredient-subgroup" key={key}>
-                    {renderHeader({
-                      label: group.name,
-                      open: groupOpen,
-                      count: searching
-                        ? `${group.items.length} of ${group.total}`
-                        : `${group.total} items`,
-                      selected: group.selected,
-                      onClick: () => toggleIn(setOpenGroups, key),
-                      sub: true,
-                    })}
-                    {groupOpen && <div className="chip-grid">{group.items.map(renderChip)}</div>}
-                  </div>
-                );
-              })}
-          </div>
-        );
-      })}
-    </section>
+      <div className="chip-grid">
+        {shown.map((item) => renderChip(item, mostUsed && !expanded ? 'big' : null))}
+      </div>
+      {mostUsed && (
+        <button type="button" className="text-button see-all" onClick={() => setExpanded((v) => !v)}>
+          {expanded ? `Show only the six most used` : `See all ${all.length} ${category}`}
+        </button>
+      )}
+    </div>
   );
 }
+
+function SearchBox({ query, onQuery }) {
+  return (
+    <div className="search-row">
+      <input
+        className="search-input"
+        type="search"
+        value={query}
+        placeholder={`Search all ${INGREDIENTS.length} ingredients`}
+        aria-label="Search all ingredients"
+        onChange={(event) => onQuery(event.target.value)}
+      />
+    </div>
+  );
+}
+
+export { INGREDIENT_BY_ID };
