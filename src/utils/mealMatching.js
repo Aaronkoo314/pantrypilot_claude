@@ -146,9 +146,19 @@ export function swapNotes(lines) {
  * Filtering and sorting
  * ---------------------------------------------------------------- */
 
+/** No option chosen (null) means any time, as does 60+. */
 export function timeLimitMinutes(timeId) {
   const option = TIME_OPTIONS.find((item) => item.id === timeId);
   return option ? option.maxMinutes : Infinity;
+}
+
+/**
+ * The chosen time option only when it actually removes meals (15 or 30 min),
+ * so every place that shows a meal count can say what limit it is under.
+ */
+export function limitingTimeOption(timeId) {
+  const option = TIME_OPTIONS.find((item) => item.id === timeId);
+  return option && Number.isFinite(option.maxMinutes) ? option : null;
 }
 
 /**

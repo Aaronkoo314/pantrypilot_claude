@@ -1098,3 +1098,53 @@ in my list find the item. A search that finds nothing takes about 0.02 ms. In th
 production build the status line read "3 matches." for "chill", "No exact match. 4 closest
 ingredients." for "chiken" and "Nothing matches." for "salt", and the search box kept its
 focus throughout.
+
+**Live check after pushing §6.6–6.7** (Sunday 27 September 2026, on
+https://pantrypilot-phi.vercel.app): "chiken" → "No exact match. 4 closest ingredients." with
+the four chickens; "scallion" → Spring Onion; "shrimp" → Prawns and Dried Shrimp; "capsicum"
+→ Bell Pepper; "chili" and "chill" → all three chilli items; "salt" → "Nothing matches.".
+The nutrition banner read "working" and the Disqus thread loaded.
+
+## 6.8 Repair 5 — no hidden 30-minute limit
+
+**Finding:** IKD Finding 1 (#1 Visibility of System Status, severity 3, screen). Step 6 had
+"30 min" selected before anyone touched it, so from step 1 the count read "24 meals" out of
+47, skipping ahead (which step 1 invites) kept the limit, and the results summary presented
+"30 min" as a choice. Second row of my table; not in predictions.md. In the Step 5 table:
+severity 3 met by one reviewer, fix as time allows.
+
+**Prompt I gave the agent:** the Step 5 template with IKD's six lines and IKD's repair line
+as mine.
+
+**The agent's arguments (summarised):**
+
+1. *Which problem does it solve?* IKD's, and the default was never mine: REFLECTION.md lists
+   "default time budget 30 minutes" under "Not anyone's — chosen because nobody specified".
+   But my repair held two opposite fixes: removing the limit until the user picks one, or
+   keeping it and labelling it a default. Labelling alone still hides 23 recipes from anyone
+   who skips.
+2. *Screen or system?* Screen. More places than it looks: step 6 has no "nothing chosen"
+   state (60+ is already no limit, but shown selected it still reads as a choice), and the
+   summary, the filter bar and the empty state's "Allow 60+ minutes" all assume a choice.
+   It also warned that kitchens saved since §6.4 store the untouched "30" as if chosen, so
+   returning visitors would keep the hidden limit.
+3. *A heuristic it could break:* relevance (#2), with slow dishes now in "Meals for tonight"
+   and the count going from 24 to 47; #4, if step 6 and the filter bar treat "nothing picked"
+   differently; #7 is small, because the kitchen is now remembered.
+4. *Smallest alternative:* A, no limit until the user picks one, with step 6 saying so and
+   the summary saying "any time"; or B, keep 30 and mark it "(default)". Either way, show the
+   limit wherever the count is shown, and drop the unchosen 30 from old saves.
+5. *How to check:* a first visit reads "47 meals"; step 6 has nothing selected; 30 gives "24
+   meals · up to 30 min" and 15 gives 9; the summary and the filter bar agree.
+
+**What I chose:** A; the limit shown on the Next button when one is chosen; and old saved
+kitchens left as they are. Someone who saved a kitchen before this change keeps its 30, but
+it is now visible on the Next button and in the summary rather than hidden.
+
+**Local check before pushing (production build):** a first visit read "47 meals" on step 1;
+step 6 had no tile selected and said "No limit until you pick one."; 30 gave "24 meals · up to
+30 min", 15 gave "9 meals · up to 15 min", tapping 15 again went back to "47 meals", and 60+
+read "47 meals". Results under 30 read "2 people · 30 min · any cuisine" with 24 cards;
+tapping 30 min again in the filter bar gave "2 people · any time · any cuisine" and 47. With
+Garlic ticked at 360 px the Next note "24 meals · up to 30 min · 0 ready" fitted on one line.
+No console errors.

@@ -137,7 +137,11 @@ export default function FilterBar({ filters, onChange, counts }) {
 
       <div hidden={!open}>
         <div className="filter-block">
-          <span className="filter-label">Cooking time</span>
+          <span className="filter-label">
+            Cooking time {!timeId && <span className="filter-any">any</span>}
+          </span>
+          {/* Same rule as step 6: nothing picked means any time, and tapping the
+              picked one again goes back to that. */}
           <div className="pill-row">
             {TIME_OPTIONS.map((option) => (
               <button
@@ -145,7 +149,7 @@ export default function FilterBar({ filters, onChange, counts }) {
                 type="button"
                 className={`pill ${timeId === option.id ? 'pill-on' : ''}`}
                 aria-pressed={timeId === option.id}
-                onClick={() => onChange({ timeId: option.id })}
+                onClick={() => onChange({ timeId: timeId === option.id ? null : option.id })}
               >
                 {option.label}
               </button>

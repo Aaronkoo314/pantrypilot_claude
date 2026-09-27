@@ -3,6 +3,7 @@ import FilterBar from './FilterBar.jsx';
 import DisqusThread from './DisqusThread.jsx';
 import MealCard from './MealCard.jsx';
 import { CUISINE_BY_ID, TIME_OPTIONS } from '../data/pantryData.js';
+import { limitingTimeOption } from '../utils/mealMatching.js';
 
 /**
  * Screen 2: the list of meals that fit the user's kitchen and constraints.
@@ -16,7 +17,8 @@ export default function MealRecommendations({
   onOpenMeal,
   onEditSetup,
 }) {
-  const timeLabel = (TIME_OPTIONS.find((item) => item.id === filters.timeId) || {}).label;
+  // Nothing picked is "any time", said in words rather than left blank.
+  const timeLabel = (TIME_OPTIONS.find((item) => item.id === filters.timeId) || {}).label || 'any time';
   const cuisineLabel =
     setup.cuisineIds.length === 0
       ? 'any cuisine'
@@ -41,9 +43,9 @@ export default function MealRecommendations({
       label: 'Allow any cuisine',
       patch: { cuisineIds: [] },
     },
-    filters.timeId !== '60plus' && {
-      label: 'Allow 60+ minutes',
-      patch: { timeId: '60plus' },
+    limitingTimeOption(filters.timeId) && {
+      label: 'Allow any cooking time',
+      patch: { timeId: null },
     },
   ].filter(Boolean);
 

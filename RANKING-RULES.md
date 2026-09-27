@@ -185,7 +185,7 @@ and none of these came from it.
 
 | Filter | Removes | Empty means |
 | --- | --- | --- |
-| Cooking time | meals whose prep + cook exceeds the budget | — (always one of three) |
+| Cooking time | meals whose prep + cook exceeds the budget | none: no limit until the user picks one (was 30 min until Problem Set 4) |
 | Cuisine | meals not in a selected cuisine | no restriction |
 | Weight band | meals not in a selected band | no restriction |
 | Vegetarian only | meals with any non-vegetarian ingredient | off |

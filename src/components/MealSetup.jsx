@@ -8,6 +8,7 @@ import {
   TIME_OPTIONS,
   WEIGHT_BANDS,
 } from '../data/pantryData.js';
+import { limitingTimeOption } from '../utils/mealMatching.js';
 
 const MIN_PEOPLE = 1;
 const MAX_PEOPLE = 12;
@@ -56,6 +57,10 @@ export default function MealSetup({ setup, onChange, onFindMeals, resultCount, r
   const step = STEPS[stepIndex];
   const isLast = stepIndex === STEPS.length - 1;
   const mealWord = resultCount === 1 ? 'meal' : 'meals';
+  // The count on every Next button says which time limit it is under, so it
+  // can never again pass off a filtered list as the whole collection.
+  const timeLimit = limitingTimeOption(timeId);
+  const countNote = `${resultCount} ${mealWord}${timeLimit ? ` · up to ${timeLimit.label}` : ''}`;
 
   // Every move lands at the top. Without this, tapping Next from halfway down
   // a long category drops you halfway down the next one, which reads as the
@@ -224,7 +229,12 @@ export default function MealSetup({ setup, onChange, onFindMeals, resultCount, r
             <h2 id="time-heading" className="section-title">
               How much time?
             </h2>
-            <p className="section-hint">Prep and cooking time together.</p>
+            <p className="section-hint">
+              Prep and cooking time together.{' '}
+              {timeId
+                ? 'Tap your choice again for no limit.'
+                : 'No limit until you pick one.'}
+            </p>
             <div className="option-row">
               {TIME_OPTIONS.map((option) => (
                 <button
@@ -232,7 +242,7 @@ export default function MealSetup({ setup, onChange, onFindMeals, resultCount, r
                   type="button"
                   className={`option-tile ${timeId === option.id ? 'option-on' : ''}`}
                   aria-pressed={timeId === option.id}
-                  onClick={() => onChange({ timeId: option.id })}
+                  onClick={() => onChange({ timeId: timeId === option.id ? null : option.id })}
                 >
                   <span className="option-label">{option.label}</span>
                   <span className="option-helper">{option.helper}</span>
@@ -344,8 +354,8 @@ export default function MealSetup({ setup, onChange, onFindMeals, resultCount, r
           {isLast ? 'Find recipes' : 'Next'}
           <span className="button-note">
             {ingredientIds.length === 0
-              ? `${resultCount} ${mealWord}`
-              : `${resultCount} ${mealWord} · ${readyCount} ready`}
+              ? countNote
+              : `${countNote} · ${readyCount} ready`}
           </span>
         </button>
       </div>

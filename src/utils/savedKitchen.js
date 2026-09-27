@@ -21,10 +21,14 @@ const STORAGE_KEY = 'pantrypilot.kitchen.v1';
 const MIN_PEOPLE = 1;
 const MAX_PEOPLE = 12;
 
+// No time limit until the user picks one (PS4 finding from IKD, severity 3):
+// the old default of 30 minutes was chosen because nobody specified one, was
+// not shown until step 6, and quietly hid 23 of the 47 recipes from anyone who
+// skipped ahead. null means "any time" everywhere a time is read.
 export const DEFAULT_SETUP = {
   ingredientIds: [],
   people: 2,
-  timeId: '30',
+  timeId: null,
   cuisineIds: [],
   weightBands: [],
 };
