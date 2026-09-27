@@ -1008,3 +1008,60 @@ lands on Undo after Start fresh and on the heading after Undo. A save holding
 `constructor`, `__proto__`, duplicates and 99 people loads as one Garlic and 12 people.
 The new line's colours are 14.18:1, 4.77:1 and 5.73:1 against its background. No
 console errors.
+
+**Live check after pushing §6.4–6.5** (Sunday 27 September 2026, on
+https://pantrypilot-phi.vercel.app): IKD's steps (Garlic → results → Charred Broccoli &
+Chilli Garlic Pasta) — Back returned to the 24-meal list, Back again to step 1 with Garlic
+ticked, Forward twice to the recipe. A reload on the recipe reopened it with "Welcome back.
+The 1 ingredient from your last visit (earlier today) is still ticked."; "Back to meals"
+then Back reached step 1 with no dead press. The Disqus thread loaded on setup, results and
+a recipe. `/api/health` answered `upstreamStatus: 200`.
+
+## 6.6 Repair 4 — search finds typos, other names and both spellings
+
+**Finding:** MML Finding 3 (#6 Recognition Rather than Recall, severity 2, screen):
+"chiken" gave "Nothing matches" with no suggestions, "scallion" missed Spring Onion, and
+"shrimp" found Dried Shrimp but not Prawns. Second row of my table; not in predictions.md.
+
+**Prompt I gave the agent:** the Step 5 template with MML's six lines, "raised by 1 of the 3
+groupmates, severity 2", and MML's repair line as my repair.
+
+**The agent's arguments (summarised):**
+
+1. *Which problem does it solve?* MML's, but the Step 5 table puts severity 2 met by one
+   reviewer in the lowest tier: leave it unless the repair takes minutes. If I do it, it has
+   to be small and must not change any search that already works, and Q4 should say why a
+   low-priority repair was made at all.
+2. *Screen or system?* Screen: search was a substring test on the name in
+   `IngredientPicker.jsx`. It also found a related defect MML did not report: the catalogue
+   spelled "Red Chilli" and "Chilli Bean Paste" but "Chili Flakes", so "chili" missed the
+   first two and "chilli" missed the third.
+3. *A heuristic it could break:* #5 and #2, if loose matches were mixed into real ones and
+   someone ticked Lemon for "lime" or Rice Vinegar for "rice"; #8, if ambiguous other names
+   ("vermicelli", "rice wine") suggested the wrong item; #4, if searches that work today
+   changed.
+4. *Smallest alternative:* a short list of unambiguous other names counted as normal hits;
+   "chili" and "chilli" compared as one word; and, only when nothing matches, the nearest
+   names by spelling, labelled as closest and shown apart. No library.
+5. *How to check:* MML's three searches, "capsicum", both chilli spellings, and that "rice",
+   "garlic" and "pork" return what they did before.
+
+**What I chose:** all three parts, the agent's alias list as it was, and one more: the name
+itself made consistent, so Chili Flakes is now displayed as Chilli Flakes (its id stays
+`chili-flakes`, because recipes and saved kitchens refer to the id). Before renaming, the
+agent checked that `/api/nutrition` sends the name to USDA: "Chili Flakes" and "Red Chilli"
+both already return no record, so the rename cannot lose a sourced figure.
+
+**Found on the way, not fixed here:** `/api/nutrition` accepts `?id=constructor` and sends
+"Object" to USDA, because its guard uses the same plain-object lookup that §6.5 fixed in
+the front end. It is logged as a separate task.
+
+**Local check before pushing (production build):** "chiken" → "No exact match for 'chiken'.
+Closest ingredients:" Chicken Breast, Chicken Thigh, Chicken Wings, Minced Chicken, and
+ticking Chicken Thigh from there added it; "scallion" → Spring Onion; "shrimp" → Prawns and
+Dried Shrimp; "capsicum" → Bell Pepper; "chili" and "chilli" → Red Chilli, Chilli Flakes,
+Chilli Bean Paste; "soy suace" → Light and Dark Soy Sauce; "xyz" → "Nothing matches 'xyz'.
+Try another name for it, or clear the search and browse this page." Of 28 searches that
+already found something, 27 return exactly what they did; "green" now also offers Spring
+Onion, through "green onion". Every one of the 93 names still finds itself. A search takes
+about half a millisecond. No console errors; no sideways scroll at 400 px.

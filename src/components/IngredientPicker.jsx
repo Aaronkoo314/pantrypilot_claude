@@ -4,6 +4,7 @@ import {
   INGREDIENT_BY_ID,
   mostUsedIn,
 } from '../data/pantryData.js';
+import { searchIngredients } from '../utils/ingredientSearch.js';
 
 /**
  * One category, one page.
@@ -38,11 +39,9 @@ export default function IngredientPicker({ category, selectedIds, onToggle, quer
 
   const searching = query.trim().length > 0;
 
-  const searchHits = useMemo(() => {
-    const needle = query.trim().toLowerCase();
-    if (!needle) return [];
-    return INGREDIENTS.filter((item) => item.name.toLowerCase().includes(needle));
-  }, [query]);
+  // Names, other names and spellings; closest matches only when nothing
+  // matches. See utils/ingredientSearch.js.
+  const { hits: searchHits, closest } = useMemo(() => searchIngredients(query), [query]);
 
   const all = useMemo(
     () => INGREDIENTS.filter((item) => item.category === category),
@@ -79,8 +78,21 @@ export default function IngredientPicker({ category, selectedIds, onToggle, quer
     return (
       <div className="step-body">
         <SearchBox query={query} onQuery={onQuery} />
-        {searchHits.length === 0 ? (
-          <p className="empty-note">Nothing matches &ldquo;{query}&rdquo;.</p>
+        {searchHits.length === 0 && closest.length > 0 ? (
+          <>
+            {/* Kept apart from real matches and named as a guess, so a near
+                miss is picked on purpose, never by mistake. */}
+            <p className="section-hint">
+              No exact match for &ldquo;{query}&rdquo;. Closest{' '}
+              {closest.length === 1 ? 'ingredient' : 'ingredients'}:
+            </p>
+            <div className="chip-grid">{closest.map((item) => renderChip(item))}</div>
+          </>
+        ) : searchHits.length === 0 ? (
+          <p className="empty-note">
+            Nothing matches &ldquo;{query}&rdquo;. Try another name for it, or clear the search and
+            browse this page.
+          </p>
         ) : (
           <>
             <p className="section-hint">

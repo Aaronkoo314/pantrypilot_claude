@@ -127,7 +127,7 @@ export const INGREDIENTS = [
   // --- Pantry & Flavour ------------------------------------ Western
   { id: 'olive-oil', name: 'Olive Oil', emoji: '\u{1FAD2}', category: 'Pantry & Flavour', group: 'Western', vegetarian: true, unitPrice: 0.18, unit: 'tbsp' }, // S$0.18 per tbsp
   { id: 'mixed-herbs', name: 'Mixed Herbs', emoji: '\u{1F33F}', category: 'Pantry & Flavour', group: 'Western', vegetarian: true, unitPrice: 0.1, unit: 'tsp' }, // S$0.10 per tsp
-  { id: 'chili-flakes', name: 'Chili Flakes', emoji: '\u{1F336}', category: 'Pantry & Flavour', group: 'Western', vegetarian: true, unitPrice: 0.09, unit: 'tsp' }, // S$0.09 per tsp
+  { id: 'chili-flakes', name: 'Chilli Flakes', emoji: '\u{1F336}', category: 'Pantry & Flavour', group: 'Western', vegetarian: true, unitPrice: 0.09, unit: 'tsp' }, // S$0.09 per tsp
   { id: 'tomato-paste', name: 'Tomato Paste', emoji: '\u{1F345}', category: 'Pantry & Flavour', group: 'Western', vegetarian: true, unitPrice: 0.14, unit: 'tbsp' }, // S$0.14 per tbsp
   { id: 'dijon-mustard', name: 'Dijon Mustard', emoji: '\u{1FAD9}', category: 'Pantry & Flavour', group: 'Western', vegetarian: true, unitPrice: 0.16, unit: 'tsp' }, // S$0.16 per tsp
   { id: 'red-wine-vinegar', name: 'Red Wine Vinegar', emoji: '\u{1FAD9}', category: 'Pantry & Flavour', group: 'Western', vegetarian: true, unitPrice: 0.12, unit: 'tbsp' }, // S$0.12 per tbsp
@@ -161,6 +161,34 @@ export const INGREDIENT_BY_ID = INGREDIENTS.reduce((map, item) => {
   map[item.id] = item;
   return map;
 }, {});
+
+/*
+ * Other names people type for an ingredient, for search only (PS4 finding from
+ * MML: "scallion" found nothing although Spring Onion is in the list, and
+ * "shrimp" missed Prawns). Only names that mean the same item and nothing
+ * else: "vermicelli" (rice or mung bean?) and "rice wine" (not Shaoxing) are
+ * left out, because a search that suggests the wrong item is worse than one
+ * that finds nothing. Names the app displays are not changed by this list.
+ *
+ * The ids keep their original spelling even where the name was made
+ * consistent: 'chili-flakes' is displayed as "Chilli Flakes", like Red Chilli
+ * and Chilli Bean Paste, because recipes and saved kitchens refer to the id.
+ */
+export const SEARCH_ALIASES = {
+  'spring-onion': ['scallion', 'green onion'],
+  prawns: ['shrimp'],
+  'bell-pepper': ['capsicum'],
+  coriander: ['cilantro'],
+  aubergine: ['eggplant', 'brinjal'],
+  'bok-choy': ['pak choi'],
+  'chinese-cabbage': ['napa cabbage', 'wombok'],
+  cornflour: ['cornstarch'],
+  chickpeas: ['garbanzo'],
+  'long-beans': ['snake beans'],
+  'pork-mince': ['ground pork'],
+  'chicken-mince': ['ground chicken'],
+  'beef-mince': ['ground beef'],
+};
 
 /*
  * Swaps a home cook makes without changing the dish: recipe ingredient id ->
