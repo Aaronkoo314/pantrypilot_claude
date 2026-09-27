@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import SplashScreen from './components/SplashScreen.jsx';
 import ServiceStatus from './components/ServiceStatus.jsx';
 import SiteFooter from './components/SiteFooter.jsx';
@@ -26,11 +26,25 @@ import {
  * screen needs no server rewrite; Disqus pins its own URL and identifier, so
  * the hash never splits the comment thread.
  */
+// Own keys only: MEAL_BY_ID is a plain object, so "#meal-constructor" would
+// otherwise find Object.prototype.constructor and crash the recipe screen.
+const isMealId = (id) => Object.prototype.hasOwnProperty.call(MEAL_BY_ID, id);
+
 function routeFromHash(hash) {
   if (hash === '#results') return { screen: 'results', mealId: null };
   const meal = /^#meal-(.+)$/.exec(hash);
-  if (meal && MEAL_BY_ID[meal[1]]) return { screen: 'detail', mealId: meal[1] };
+  if (meal && isMealId(meal[1])) return { screen: 'detail', mealId: meal[1] };
   return { screen: 'setup', mealId: null };
+}
+
+/** Where keyboard and screen-reader focus goes when the line it was on goes. */
+function focusPageHeading() {
+  window.setTimeout(() => {
+    const heading = document.querySelector('h1');
+    if (!heading) return;
+    heading.setAttribute('tabindex', '-1');
+    heading.focus();
+  }, 0);
 }
 
 function addressFor(screen, mealId) {
@@ -59,7 +73,8 @@ export default function App() {
   // What the user tells us on screen 1. Cuisines and weight bands are
   // multi-select: an empty array means no restriction rather than nothing.
   // Starts from what this browser remembered, if anything.
-  const [setup, setSetup] = useState(initial.saved ? initial.saved.setup : DEFAULT_SETUP);
+  const [initialSetup] = useState(() => (initial.saved ? initial.saved.setup : DEFAULT_SETUP));
+  const [setup, setSetup] = useState(initialSetup);
 
   // A remembered kitchen is always announced, never restored silently.
   const [notice, setNotice] = useState(() =>
@@ -73,24 +88,29 @@ export default function App() {
   );
   const [beforeFresh, setBeforeFresh] = useState(null);
 
-  // Save every change, except the first render, which would only rewrite the
-  // saved time of a kitchen nobody touched. Back to the defaults means there
+  // Save every change, but not the setup we started from, which would only
+  // rewrite the saved time of a kitchen nobody touched. Compared by identity
+  // rather than with a first-run flag, so StrictMode's double effect in
+  // development cannot slip a save through. Back to the defaults means there
   // is nothing worth remembering.
-  const firstSave = useRef(true);
   useEffect(() => {
-    if (firstSave.current) {
-      firstSave.current = false;
-      return;
-    }
+    if (setup === initialSetup) return;
     if (isDefaultSetup(setup)) forgetSavedSetup();
     else saveSetup(setup);
-  }, [setup]);
+  }, [setup, initialSetup]);
 
   // Mark the entry we arrived on as ours, and follow the browser's Back and
-  // Forward between the three screens.
+  // Forward between the three screens. A reload keeps the entry's state, so
+  // its depth is kept too: resetting it to 0 made the app's back buttons
+  // add an entry instead of stepping back, leaving two identical entries.
   useEffect(() => {
+    const previous = window.history.state;
+    const depth =
+      previous && previous.pantrypilot && Number.isInteger(previous.depth) && previous.depth > 0
+        ? previous.depth
+        : 0;
     window.history.replaceState(
-      { pantrypilot: true, depth: 0 },
+      { pantrypilot: true, depth },
       '',
       addressFor(initial.route.screen, initial.route.mealId)
     );
@@ -111,32 +131,47 @@ export default function App() {
   }
 
   // The app's own back buttons: step back through history when the previous
-  // entry is one of ours, so they never add a duplicate entry; otherwise (the
-  // visitor arrived on this screen) replace it with the screen before.
+  // entry is one of ours, exactly like the browser's Back. A visitor who
+  // arrived on this screen (a link, a bookmark) has no entry of ours behind
+  // it, so the screen before is pushed instead: the app never leaves, and a
+  // push, unlike rewriting the current entry, also drops any stale entries
+  // ahead of it that Forward could otherwise reach.
   function goBack(fallbackScreen) {
     const state = window.history.state;
     if (state && state.pantrypilot && state.depth > 0) {
       window.history.back();
       return;
     }
-    window.history.replaceState({ pantrypilot: true, depth: 0 }, '', addressFor(fallbackScreen));
-    setScreen(fallbackScreen);
+    goTo(fallbackScreen);
   }
 
+  // Start fresh opens setup as a new screen, for the same reason: rewriting
+  // the current entry in place left two identical setup entries (a dead Back)
+  // and a recipe ahead whose "Back to meals" led to setup.
   function startFresh() {
     setBeforeFresh(setup);
     setSetup(DEFAULT_SETUP);
     setNotice({ kind: 'fresh' });
-    if (screen !== 'setup') {
-      window.history.replaceState({ pantrypilot: true, depth: 0 }, '', addressFor('setup'));
-      setScreen('setup');
-    }
+    if (screen !== 'setup') goTo('setup');
+    // The Start fresh button is gone; its Undo takes the focus. Done here, once,
+    // rather than with autoFocus, which a dynamically inserted button ignores
+    // and which would fire again every time the line re-mounts on a new screen.
+    window.setTimeout(() => {
+      const undo = document.querySelector('.welcome-undo');
+      if (undo) undo.focus();
+    }, 0);
   }
 
   function undoFresh() {
     if (beforeFresh) setSetup(beforeFresh);
     setBeforeFresh(null);
     setNotice(null);
+    focusPageHeading();
+  }
+
+  function dismissNotice() {
+    setNotice(null);
+    focusPageHeading();
   }
 
   // Controls that only exist on the results screen.
@@ -209,7 +244,7 @@ export default function App() {
   }, [setup, listOptions.readyOnly, listOptions.vegetarianOnly]);
 
   const activeMeal = useMemo(() => {
-    if (!activeMealId || !MEAL_BY_ID[activeMealId]) return null;
+    if (!activeMealId || !isMealId(activeMealId)) return null;
     return matchMeal(MEAL_BY_ID[activeMealId], setup.ingredientIds);
   }, [activeMealId, setup.ingredientIds]);
 
@@ -258,7 +293,7 @@ export default function App() {
       notice={notice}
       onStartFresh={startFresh}
       onUndo={undoFresh}
-      onDismiss={() => setNotice(null)}
+      onDismiss={dismissNotice}
     />
   );
 

@@ -57,9 +57,10 @@ export default function SiteFooter() {
       {/* PS4: the kitchen is now remembered, so say where, beside the other
           notice about what this page keeps. */}
       <p className="privacy-note">
-        Your ingredient list and your answers are saved only in this browser, so they are still
-        here when you come back. PantryPilot has no account and keeps no copy. Clear all removes the
-        ingredients; Start fresh, shown when you come back, clears everything.
+        Where this browser allows it, your ingredient list and your answers are saved in it, so
+        they are still here when you come back. They are not sent to PantryPilot, which has no
+        account and no copy of them; Microsoft Clarity, above, may still record what is on screen.
+        Clear all removes the ingredients; Start fresh, shown when you come back, clears everything.
       </p>
     </footer>
   );

@@ -966,6 +966,45 @@ Charred Broccoli & Chilli Garlic Pasta; the address went `#results` → `#meal-�
 returned to the 24-meal list, Back again to step 1 with Garlic still ticked, and Forward
 twice to the recipe. A reload on the recipe reopened it with "Welcome back. The 1
 ingredient you ticked earlier today is still ticked." The app's "Back to meals" on a
-reloaded recipe went to the list without adding an entry. Start fresh cleared the list
-and the saved copy and went to step 1; Undo put Garlic back. No console errors; no
+reloaded recipe went to the list; I recorded that as "without adding an entry", but I
+never pressed Back afterwards, and §6.5 shows it did add one. Start fresh cleared the
+list and the saved copy and went to step 1; Undo put Garlic back. No console errors; no
 sideways scroll at 400 px.
+
+## 6.5 What the review of §6.4 caught before I pushed
+
+The same three-reviewer check, each finding tested by a sceptic, confirmed three
+medium defects and some smaller ones:
+
+1. **A reload reset the history depth to 0** (found by all three reviewers). After a
+   reload on a recipe, "Back to meals" rewrote the entry instead of stepping back, so
+   the next browser Back landed on the same meal list again and looked dead. My own
+   check above missed it for the reason it gives. The depth now survives a reload.
+2. **Start fresh rewrote the current entry as setup**, leaving two identical setup
+   entries and, after Forward, a recipe whose "Back to meals" led to setup. Start
+   fresh, and the app's back buttons when there is no entry of ours behind them, now
+   push a new screen, which also drops the stale entries ahead.
+3. **`#meal-constructor` blanked the app** (and kept blanking it on reload), because
+   `MEAL_BY_ID` is a plain object and inherited names passed the check. Only the
+   table's own keys count now, and the saved kitchen drops inherited names,
+   non-strings and duplicates the same way.
+
+Smaller ones fixed at the same time: focus fell to the page body after Undo and ×
+(it now goes to the Undo, then to the page heading); the Welcome back date said "you
+ticked" although it is the time of the last change to anything (it now says "from your
+last visit (Monday)", with the year when it is not this year); the first-render save
+guard failed under React StrictMode in development; and the footer promised the list
+would still be there even where storage is blocked, and said "keeps no copy" beside
+Clarity, which records the screen. One finding was refuted: the Welcome back line is a
+live region that is already filled when it appears, but it is visible text on every
+screen, so nothing needs announcing.
+
+**Re-checked in the production build:** reload on a recipe keeps depth 2; "Back to
+meals" steps back to the list and Back again reaches step 1, with no dead press. Start
+fresh from the list, then Back, shows the list; Forward reaches setup, never a stale
+recipe. A cold `#results`, a recipe, "Back to meals", then Edit reaches setup, and
+Back returns to the list. `#meal-constructor` and `#meal-toString` open setup. Focus
+lands on Undo after Start fresh and on the heading after Undo. A save holding
+`constructor`, `__proto__`, duplicates and 99 people loads as one Garlic and 12 people.
+The new line's colours are 14.18:1, 4.77:1 and 5.73:1 against its background. No
+console errors.

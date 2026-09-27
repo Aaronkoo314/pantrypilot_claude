@@ -55,7 +55,12 @@ export function loadSavedSetup() {
 
   try {
     const { setup = {}, savedAt = null } = JSON.parse(raw);
-    const list = (value, known) => (Array.isArray(value) ? value.filter((id) => known[id]) : []);
+    // Own keys only, strings only, each once: a plain-object lookup would let
+    // "constructor" or "__proto__" through as if they were ingredients.
+    const own = (known, id) =>
+      typeof id === 'string' && Object.prototype.hasOwnProperty.call(known, id);
+    const list = (value, known) =>
+      Array.isArray(value) ? [...new Set(value.filter((id) => own(known, id)))] : [];
     const clean = {
       ingredientIds: list(setup.ingredientIds, INGREDIENT_BY_ID),
       people: Number.isInteger(setup.people)
@@ -92,7 +97,11 @@ export function forgetSavedSetup() {
   }
 }
 
-/** "earlier today", "yesterday", "on Monday", or "on 14 Sep". */
+/**
+ * "earlier today", "yesterday", "on Monday", "on 14 Sept", or "on 14 Sept 2025"
+ * in an earlier year. It is the time of the last change to the kitchen, which
+ * is what the Welcome back line calls "your last visit".
+ */
 export function whenSaved(savedAt, now = new Date()) {
   const then = savedAt ? new Date(savedAt) : null;
   if (!then || Number.isNaN(then.getTime())) return null;
@@ -101,5 +110,7 @@ export function whenSaved(savedAt, now = new Date()) {
   if (days <= 0) return 'earlier today';
   if (days === 1) return 'yesterday';
   if (days < 7) return `on ${then.toLocaleDateString('en-SG', { weekday: 'long' })}`;
-  return `on ${then.toLocaleDateString('en-SG', { day: 'numeric', month: 'short' })}`;
+  const options = { day: 'numeric', month: 'short' };
+  if (then.getFullYear() !== now.getFullYear()) options.year = 'numeric';
+  return `on ${then.toLocaleDateString('en-SG', options)}`;
 }

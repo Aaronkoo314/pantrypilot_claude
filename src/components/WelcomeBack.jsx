@@ -14,20 +14,24 @@ export default function WelcomeBack({ notice, onStartFresh, onUndo, onDismiss })
     return (
       <div className="welcome-back" role="status">
         <p className="welcome-text">Started fresh: your ingredients and answers are cleared.</p>
-        <button type="button" className="text-button" onClick={onUndo}>
+        {/* App moves focus here after Start fresh, whose button this replaces. */}
+        <button type="button" className="text-button welcome-undo" onClick={onUndo}>
           Undo
         </button>
       </div>
     );
   }
 
+  // "Last visit" rather than "you ticked": the saved time is the last change to
+  // anything in the kitchen, not the day each ingredient was ticked.
   const { count, when } = notice;
+  const visit = `your last visit${when ? ` (${when.replace(/^on /, '')})` : ''}`;
   const what =
     count > 0
-      ? `The ${count} ${count === 1 ? 'ingredient' : 'ingredients'} you ticked${when ? ` ${when}` : ''} ${
+      ? `The ${count} ${count === 1 ? 'ingredient' : 'ingredients'} from ${visit} ${
           count === 1 ? 'is' : 'are'
         } still ticked.`
-      : `Your answers${when ? ` from ${when.replace(/^on /, '')}` : ''} are kept.`;
+      : `Your answers from ${visit} are kept.`;
 
   return (
     <div className="welcome-back" role="status">
