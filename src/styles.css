@@ -1306,6 +1306,40 @@ button {
   border-top: 1px solid #c3ddcb;
 }
 
+/* ---------------- remembered kitchen ----------------
+   Announces a restored ingredient list, and the Undo after Start fresh.
+   One row under the status line, the same quiet weight, on every screen. */
+
+.welcome-back {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+  padding: 4px 8px 4px 16px;
+  border-bottom: 1px solid var(--line);
+  background: var(--herb-soft);
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.welcome-text {
+  flex: 1 1 220px;
+  margin: 0;
+  color: var(--ink);
+}
+
+.welcome-dismiss {
+  flex: none;
+  width: var(--tap);
+  height: var(--tap);
+  border: 0;
+  background: none;
+  color: var(--ink-soft);
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+}
+
 /* ---------------- live service status ----------------
    A standing statement of whether the live lookup is working, on every screen.
    Deliberately quiet: it sits above the page content, states one fact, and

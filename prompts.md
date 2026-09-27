@@ -910,3 +910,62 @@ them found by two reviewers each):
 One more reviewer argued the "+K optional" count was intended design; the
 sceptic confirmed the other two reviewers instead, because the spec says both
 screens must show the same count.
+
+**Live check after pushing §6.1–6.3** (Sunday 27 September 2026, on
+https://pantrypilot-phi.vercel.app): `/api/health` answered `keyConfigured: true`,
+`upstreamStatus: 200`. MML's five ingredients → Thunder Basil "36% match, you have 4 of
+11" with both swaps named, "You have (4)" on the detail screen, S$2.85 missing, Palm
+Sugar under Optional; Mustard Herb Chicken 1 of 7; Wok-Charred Noodles "2 of 9 · +1
+optional". The Disqus thread still loaded when opened, and the footer still named
+Disqus and Clarity. "24 meals · 0 ready" was still 0, as predicted.
+
+## 6.4 Repair 3 — Back stays inside the app, and the kitchen is remembered
+
+**Finding:** IKD Finding 2 (#3 User Control and Freedom, severity 3) and CCH Finding 1
+(the same problem filed under #7 Flexibility and Efficiency of Use, severity 3). Back
+from a recipe left PantryPilot for the Google page, and a reload or a return the next
+evening started over at step 1 with nothing ticked. This problem is in the second row
+of my table: I never logged it in predictions.md. But it was not new to me: "Remembered
+staples, in browser storage, so the ingredient list is not re-ticked every visit" was
+already on my own roadmap in CHANGELOG.md (v4, "What is left"). I knew about the cost
+and did not count it as a usability problem when I evaluated my own product.
+
+**Prompt I gave the agent:** the Step 5 template, with IKD's finding in its six lines,
+CCH's example as evidence, and as my repair: "Going back always returns to the previous
+step or screen inside the app, and a visitor who leaves, reloads or comes back the next
+evening finds the ingredients and answers they had already given, and can go straight
+to meals or change only what they have used up."
+
+**The agent's arguments (summarised):**
+
+1. *Which problem does it solve?* The finding's, but my repair bundles three things:
+   Back inside the app and a reload that keeps everything (the core of both findings),
+   and a kitchen remembered across days (CCH's, closer to a new feature).
+2. *Screen or system?* Screen. All the state lives in `App.jsx` and two components, the
+   address never changes and nothing is saved, so no server is needed.
+3. *Heuristics it could break:* #2 and trust, because last week's list may be eaten, so a
+   silent restore would say "you have" about used-up food; #3 itself, if every one of the
+   seven steps and five recipe pages became a history entry and leaving took a dozen
+   presses of Back; #4, if the app's own back buttons and the browser's Back did
+   different things or doubled entries; and the privacy notice, which would no longer say
+   everything the page keeps.
+4. *Smallest alternative:* save the setup in `localStorage`, never in the address;
+   announce every restore with "Welcome back · Start fresh"; give only the three screens
+   a history entry, as a hash, so a reload needs no server rewrite. The agent checked
+   `DisqusThread.jsx` first: `page.identifier` is pinned to `home` and the URL to the live
+   address, so the hash cannot split the comment thread.
+5. *How to check:* IKD's steps on Android Chrome; CCH's reload and a new tab; a private
+   window; Disqus on every screen; `/api/health`.
+
+**What I chose:** Back for the three screens only; remember until the user clears it,
+with "Welcome back · Start fresh"; and a line in the footer saying the list is saved only
+in this browser. Start fresh can be undone, like Clear all.
+
+**Local check before pushing (production build):** tick Garlic → Find recipes →
+Charred Broccoli & Chilli Garlic Pasta; the address went `#results` → `#meal-…`. Back
+returned to the 24-meal list, Back again to step 1 with Garlic still ticked, and Forward
+twice to the recipe. A reload on the recipe reopened it with "Welcome back. The 1
+ingredient you ticked earlier today is still ticked." The app's "Back to meals" on a
+reloaded recipe went to the list without adding an entry. Start fresh cleared the list
+and the saved copy and went to step 1; Undo put Garlic back. No console errors; no
+sideways scroll at 400 px.

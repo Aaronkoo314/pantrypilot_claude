@@ -1,33 +1,143 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import SplashScreen from './components/SplashScreen.jsx';
 import ServiceStatus from './components/ServiceStatus.jsx';
 import SiteFooter from './components/SiteFooter.jsx';
+import WelcomeBack from './components/WelcomeBack.jsx';
 import MealSetup from './components/MealSetup.jsx';
 import MealRecommendations from './components/MealRecommendations.jsx';
 import MealDetail from './components/MealDetail.jsx';
 import { MEALS, MEAL_BY_ID } from './data/pantryData.js';
 import { buildRecommendations, defaultSortDir, matchMeal } from './utils/mealMatching.js';
+import {
+  DEFAULT_SETUP,
+  forgetSavedSetup,
+  isDefaultSetup,
+  loadSavedSetup,
+  saveSetup,
+  whenSaved,
+} from './utils/savedKitchen.js';
+
+/*
+ * Which screen an address shows. Only the three screens get an entry in the
+ * browser's history (PS4 finding from IKD and CCH: Back left the app and a
+ * reload lost everything). The seven setup steps and the five recipe pages
+ * stay inside their screens, so leaving the app is still one or two presses
+ * of Back rather than a dozen. A hash rather than a path, so a reload on any
+ * screen needs no server rewrite; Disqus pins its own URL and identifier, so
+ * the hash never splits the comment thread.
+ */
+function routeFromHash(hash) {
+  if (hash === '#results') return { screen: 'results', mealId: null };
+  const meal = /^#meal-(.+)$/.exec(hash);
+  if (meal && MEAL_BY_ID[meal[1]]) return { screen: 'detail', mealId: meal[1] };
+  return { screen: 'setup', mealId: null };
+}
+
+function addressFor(screen, mealId) {
+  const hash = screen === 'results' ? '#results' : screen === 'detail' ? `#meal-${mealId}` : '';
+  return `${window.location.pathname}${window.location.search}${hash}`;
+}
 
 /**
  * PantryPilot root.
  *
  * All three screens live in one page: `screen` decides which one renders,
- * so moving between them never reloads the browser.
+ * so moving between them never reloads the browser. Each screen change is
+ * also a history entry, so the browser's Back and the app's own back buttons
+ * do the same thing.
  */
 export default function App() {
+  const [initial] = useState(() => ({
+    route: routeFromHash(window.location.hash),
+    saved: loadSavedSetup(),
+  }));
+
   const [showSplash, setShowSplash] = useState(true);
-  const [screen, setScreen] = useState('setup');
-  const [activeMealId, setActiveMealId] = useState(null);
+  const [screen, setScreen] = useState(initial.route.screen);
+  const [activeMealId, setActiveMealId] = useState(initial.route.mealId);
 
   // What the user tells us on screen 1. Cuisines and weight bands are
   // multi-select: an empty array means no restriction rather than nothing.
-  const [setup, setSetup] = useState({
-    ingredientIds: [],
-    people: 2,
-    timeId: '30',
-    cuisineIds: [],
-    weightBands: [],
-  });
+  // Starts from what this browser remembered, if anything.
+  const [setup, setSetup] = useState(initial.saved ? initial.saved.setup : DEFAULT_SETUP);
+
+  // A remembered kitchen is always announced, never restored silently.
+  const [notice, setNotice] = useState(() =>
+    initial.saved && !isDefaultSetup(initial.saved.setup)
+      ? {
+          kind: 'welcome',
+          count: initial.saved.setup.ingredientIds.length,
+          when: whenSaved(initial.saved.savedAt),
+        }
+      : null
+  );
+  const [beforeFresh, setBeforeFresh] = useState(null);
+
+  // Save every change, except the first render, which would only rewrite the
+  // saved time of a kitchen nobody touched. Back to the defaults means there
+  // is nothing worth remembering.
+  const firstSave = useRef(true);
+  useEffect(() => {
+    if (firstSave.current) {
+      firstSave.current = false;
+      return;
+    }
+    if (isDefaultSetup(setup)) forgetSavedSetup();
+    else saveSetup(setup);
+  }, [setup]);
+
+  // Mark the entry we arrived on as ours, and follow the browser's Back and
+  // Forward between the three screens.
+  useEffect(() => {
+    window.history.replaceState(
+      { pantrypilot: true, depth: 0 },
+      '',
+      addressFor(initial.route.screen, initial.route.mealId)
+    );
+    function onPopState() {
+      const route = routeFromHash(window.location.hash);
+      if (route.mealId) setActiveMealId(route.mealId);
+      setScreen(route.screen);
+    }
+    window.addEventListener('popstate', onPopState);
+    return () => window.removeEventListener('popstate', onPopState);
+  }, [initial]);
+
+  function goTo(nextScreen, mealId = null) {
+    const depth = (window.history.state && window.history.state.depth) || 0;
+    window.history.pushState({ pantrypilot: true, depth: depth + 1 }, '', addressFor(nextScreen, mealId));
+    if (mealId) setActiveMealId(mealId);
+    setScreen(nextScreen);
+  }
+
+  // The app's own back buttons: step back through history when the previous
+  // entry is one of ours, so they never add a duplicate entry; otherwise (the
+  // visitor arrived on this screen) replace it with the screen before.
+  function goBack(fallbackScreen) {
+    const state = window.history.state;
+    if (state && state.pantrypilot && state.depth > 0) {
+      window.history.back();
+      return;
+    }
+    window.history.replaceState({ pantrypilot: true, depth: 0 }, '', addressFor(fallbackScreen));
+    setScreen(fallbackScreen);
+  }
+
+  function startFresh() {
+    setBeforeFresh(setup);
+    setSetup(DEFAULT_SETUP);
+    setNotice({ kind: 'fresh' });
+    if (screen !== 'setup') {
+      window.history.replaceState({ pantrypilot: true, depth: 0 }, '', addressFor('setup'));
+      setScreen('setup');
+    }
+  }
+
+  function undoFresh() {
+    if (beforeFresh) setSetup(beforeFresh);
+    setBeforeFresh(null);
+    setNotice(null);
+  }
 
   // Controls that only exist on the results screen.
   const [listOptions, setListOptions] = useState({
@@ -110,6 +220,10 @@ export default function App() {
       ...current,
       ...(typeof patch === 'function' ? patch(current) : patch),
     }));
+    // Once the user edits the kitchen, the restored list is theirs again, and
+    // an Undo of Start fresh would overwrite what they have just ticked.
+    setNotice(null);
+    setBeforeFresh(null);
   }
 
   function updateFilters(patch) {
@@ -132,24 +246,33 @@ export default function App() {
   }
 
   function openMeal(mealId) {
-    setActiveMealId(mealId);
-    setScreen('detail');
+    goTo('detail', mealId);
   }
 
   // The cover sits above whatever screen is already mounted behind it, so
   // nothing has to load again once it fades.
   const cover = showSplash ? <SplashScreen onDone={() => setShowSplash(false)} /> : null;
 
+  const welcome = (
+    <WelcomeBack
+      notice={notice}
+      onStartFresh={startFresh}
+      onUndo={undoFresh}
+      onDismiss={() => setNotice(null)}
+    />
+  );
+
   if (screen === 'detail' && activeMeal) {
     return (
       <>
         {cover}
         <ServiceStatus />
+        {welcome}
         <MealDetail
           key={activeMeal.id}
           meal={activeMeal}
           initialServings={setup.people}
-          onBack={() => setScreen('results')}
+          onBack={() => goBack('results')}
         />
         <SiteFooter />
       </>
@@ -161,6 +284,7 @@ export default function App() {
       <>
         {cover}
         <ServiceStatus />
+        {welcome}
         <MealRecommendations
           meals={recommendations}
           counts={counts}
@@ -168,7 +292,7 @@ export default function App() {
           filters={filters}
           onFilterChange={updateFilters}
           onOpenMeal={openMeal}
-          onEditSetup={() => setScreen('setup')}
+          onEditSetup={() => goBack('setup')}
         />
         <SiteFooter />
       </>
@@ -179,10 +303,11 @@ export default function App() {
     <>
       {cover}
       <ServiceStatus />
+      {welcome}
       <MealSetup
         setup={setup}
         onChange={updateSetup}
-        onFindMeals={() => setScreen('results')}
+        onFindMeals={() => goTo('results')}
         resultCount={counts.setupTotal}
         readyCount={counts.readyForSetup}
       />

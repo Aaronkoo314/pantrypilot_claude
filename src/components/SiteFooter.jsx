@@ -54,6 +54,13 @@ export default function SiteFooter() {
         </a>
         .
       </p>
+      {/* PS4: the kitchen is now remembered, so say where, beside the other
+          notice about what this page keeps. */}
+      <p className="privacy-note">
+        Your ingredient list and your answers are saved only in this browser, so they are still
+        here when you come back. PantryPilot has no account and keeps no copy. Clear all removes the
+        ingredients; Start fresh, shown when you come back, clears everything.
+      </p>
     </footer>
   );
 }

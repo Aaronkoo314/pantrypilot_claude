@@ -351,7 +351,8 @@ started:
   Blocked on a real limit rather than on effort: the pantry is a boolean, so the app knows you
   have garlic but not how much, and a merged list will confidently omit an ingredient you are
   three cloves short of.
-- **Remembered staples**, in browser storage, so the ingredient list is not re-ticked every visit.
+- ~~**Remembered staples**, in browser storage, so the ingredient list is not re-ticked every visit.~~
+  Done in Problem Set 4, after two groupmates hit it (IKD, CCH); see `prompts.md` §6.4.
 - **The four remaining cuisines** — Japanese, French, Spanish, Italian.
 
 Halal filtering was considered and dropped. A halal claim depends on slaughter method,

@@ -75,7 +75,10 @@ feedback row sits at the bottom of every one of them.
 A status row sits above every screen saying whether the live lookup is working, with a link to
 `/api/health` for anyone who would rather read the raw answer than our summary of it.
 
-All three screens live in one page, so moving between them never reloads the browser.
+All three screens live in one page, so moving between them never reloads the browser. Each screen
+has its own address (`#results`, `#meal-<id>`), so the browser's Back moves between them and a
+reload stays where you were, and the ingredient list and answers are remembered in this browser
+until you clear them. A returning visitor is told so, with a Start fresh that can be undone.
 
 ## Running it
 
@@ -138,7 +141,9 @@ output directory `dist`).
 | `vite.config.js` | Standard Vite + React plugin config. |
 | `src/main.jsx` | Mounts `<App />` into `#root` and loads the stylesheet. |
 | `src/components/SplashScreen.jsx` | The cover screen. Three-second hold on the wordmark, skippable, skipped under reduced-motion. Asserts nothing: the progress bar it used to carry was deleted for Problem Set 2. |
-| `src/App.jsx` | Root component. Holds setup, filter and screen state, computes the recommendation list, and switches between the three screens without reloading. |
+| `src/App.jsx` | Root component. Holds setup, filter and screen state, computes the recommendation list, and switches between the three screens without reloading. Gives each screen a history entry and restores the remembered setup. |
+| `src/utils/savedKitchen.js` | Saves the setup to `localStorage`, reads it back with anything the catalogue no longer knows dropped, and words how long ago it was saved. Every storage access is wrapped, so a browser that refuses storage just does not remember. |
+| `src/components/WelcomeBack.jsx` | The one line a returning visitor sees: how many ingredients are still ticked and since when, with Start fresh, and the Undo that follows it. |
 | `src/data/pantryData.js` | **All invented data except the sourced panel's figures:** 93 ingredients with unit, price and vegetarian flag, and 47 meals across three cuisines with quantities, servings, times, macros, difficulty and category. Calories, weight band, vegetarian status and price are derived here, never authored. |
 | `src/utils/mealMatching.js` | Pure logic: ingredient matching, filtering, sorting, serving scaling, pricing and formatting. |
 | `src/components/MealSetup.jsx` | Screen 1, as a seven-step flow. Holds the step index, the jumpable progress bar, the picked-ingredient tray with its undoable Clear all, and the two pages of non-ingredient questions. |
@@ -151,6 +156,6 @@ output directory `dist`).
 | `src/components/SiteFooter.jsx` | The standing credit to USDA FoodData Central, on every screen rather than only where a lookup succeeded, plus the standing statement that everything else is invented. |
 | `src/components/DisqusThread.jsx` | The feedback thread at the bottom of the first screen. Loads the Disqus script once per page load and calls `DISQUS.reset` when the screen re-mounts, with `page.identifier` fixed to `home` so every visitor writes into one thread. |
 | `src/components/DisqusThread.jsx` | The collapsed feedback row at the bottom of every page. Fetches the Disqus script only when a visitor opens it, closes again on a page change, and pins `page.identifier` to `home` so every comment lands in one thread. |
-| `src/components/SiteFooter.jsx` | The standing source credit and the notice naming Microsoft Clarity and Disqus, on every screen. |
+| `src/components/SiteFooter.jsx` | The standing source credit, the notice naming Microsoft Clarity and Disqus, and the line saying the ingredient list is kept only in this browser, on every screen. |
 | `src/components/ServiceStatus.jsx` | The standing status row on every screen. Reads `/api/health` on mount and every minute, states in one line whether the live lookup is working, and links to the raw endpoint. |
 | `src/styles.css` | All styling. Mobile-first, warm palette, 48px touch targets on the primary controls; the compact "Clear all" (32px) and the second-level group headers (44px) are the two deliberate exceptions. |
