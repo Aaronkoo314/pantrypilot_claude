@@ -57,10 +57,19 @@ export default function MealSetup({ setup, onChange, onFindMeals, resultCount, r
   const step = STEPS[stepIndex];
   const isLast = stepIndex === STEPS.length - 1;
   const mealWord = resultCount === 1 ? 'meal' : 'meals';
-  // The count on every Next button says which time limit it is under, so it
-  // can never again pass off a filtered list as the whole collection.
+  // When a time limit is chosen, the count on every Next button names it
+  // ("· up to 30 min"), so a time nobody chose can no longer hide recipes.
+  // Cuisine and weight, picked on step 7, also narrow this count and are not
+  // named here.
   const timeLimit = limitingTimeOption(timeId);
-  const countNote = `${resultCount} ${mealWord}${timeLimit ? ` · up to ${timeLimit.label}` : ''}`;
+  // Each part keeps its words together (non-breaking spaces), so when the
+  // note wraps on a narrow phone it breaks only at a "·", never inside "0 ready".
+  const keep = (text) => text.replace(/ /g, ' ');
+  const noteParts = [
+    keep(`${resultCount} ${mealWord}`),
+    timeLimit && keep(`up to ${timeLimit.label}`),
+    ingredientIds.length > 0 && keep(`${readyCount} ready`),
+  ].filter(Boolean);
 
   // Every move lands at the top. Without this, tapping Next from halfway down
   // a long category drops you halfway down the next one, which reads as the
@@ -231,9 +240,11 @@ export default function MealSetup({ setup, onChange, onFindMeals, resultCount, r
             </h2>
             <p className="section-hint">
               Prep and cooking time together.{' '}
-              {timeId
+              {timeLimit
                 ? 'Tap your choice again for no limit.'
-                : 'No limit until you pick one.'}
+                : timeId
+                  ? '60+ min puts no limit on time.'
+                  : 'No limit until you pick one.'}
             </p>
             <div className="option-row">
               {TIME_OPTIONS.map((option) => (
@@ -352,11 +363,7 @@ export default function MealSetup({ setup, onChange, onFindMeals, resultCount, r
           onClick={() => (isLast ? onFindMeals() : goTo(stepIndex + 1))}
         >
           {isLast ? 'Find recipes' : 'Next'}
-          <span className="button-note">
-            {ingredientIds.length === 0
-              ? countNote
-              : `${countNote} · ${readyCount} ready`}
-          </span>
+          <span className="button-note">{noteParts.join(' · ')}</span>
         </button>
       </div>
     </div>

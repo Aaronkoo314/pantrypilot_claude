@@ -1614,19 +1614,27 @@ button {
 
 /* Next carries the live count, so it takes the room the other two leave.
    min-width:0 lets it shrink below the note's intrinsic width rather than
-   overflowing, and the note truncates instead of forcing the button wide. */
+   overflowing. */
 .step-bar .step-next {
   flex: 1 1 auto;
   min-width: 0;
   min-height: var(--tap);
-  padding: 0 12px;
+  /* Vertical room for a note that has wrapped onto two or three lines. */
+  padding: 6px 12px;
 }
 
+/* The note wraps inside the button rather than being cut: with a time limit
+   and a ready count it is "24 meals · up to 30 min · 0 ready", which on a
+   360 px phone beside Back and Skip is wider than Next. Before PS4 it was
+   nowrap with an ellipsis that never applied (a centred column flex item is
+   not constrained), so the text ran out of the button and read "4 meals".
+   Truncating would hide the count, which is the point of the note. */
 .step-bar .button-note {
   display: block;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  max-width: 100%;
+  white-space: normal;
+  text-align: center;
+  line-height: 1.25;
 }
 
 @media (min-width: 620px) {

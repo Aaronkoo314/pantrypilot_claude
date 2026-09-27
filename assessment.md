@@ -371,8 +371,9 @@ useful to me as a found fault than as a passed line.
 ## F4 · The mistake this user will actually make has a way back — **Met**
 
 With filters that return nothing, the empty state builds its relaxation offers from whichever
-filters are actually binding (`MealRecommendations.jsx:25-46`) — "Allow any cuisine", "Allow 60+
-minutes" — rather than printing a generic "no results". The setup screen also remains one tap away
+filters are actually binding (`MealRecommendations.jsx`, the `relaxations` list) — "Allow any
+cuisine", "Allow any cooking time" (offered only when 15 or 30 min is chosen, since Problem Set 4
+removed the default time limit) — rather than printing a generic "no results". The setup screen also remains one tap away
 throughout.
 
 ## F5 · Nothing reorders the list behind the user's choice — **Met**

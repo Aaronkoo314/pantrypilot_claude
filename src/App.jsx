@@ -163,7 +163,15 @@ export default function App() {
   }
 
   function undoFresh() {
-    if (beforeFresh) setSetup(beforeFresh);
+    if (beforeFresh) {
+      setSetup(beforeFresh);
+      // Saved here rather than by the save effect: when nothing was edited
+      // before Start fresh, beforeFresh is the very object the page started
+      // from, which the effect skips, so the copy Start fresh deleted never
+      // came back and the next reload lost the kitchen.
+      if (isDefaultSetup(beforeFresh)) forgetSavedSetup();
+      else saveSetup(beforeFresh);
+    }
     setBeforeFresh(null);
     setNotice(null);
     focusPageHeading();

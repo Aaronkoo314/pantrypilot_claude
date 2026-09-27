@@ -1138,13 +1138,49 @@ as mine.
    meals · up to 30 min" and 15 gives 9; the summary and the filter bar agree.
 
 **What I chose:** A; the limit shown on the Next button when one is chosen; and old saved
-kitchens left as they are. Someone who saved a kitchen before this change keeps its 30, but
-it is now visible on the Next button and in the summary rather than hidden.
+kitchens left as they are. Someone who saved a kitchen before this change keeps its 30; the
+results summary always showed it, and now every Next button names it too.
 
 **Local check before pushing (production build):** a first visit read "47 meals" on step 1;
 step 6 had no tile selected and said "No limit until you pick one."; 30 gave "24 meals · up to
 30 min", 15 gave "9 meals · up to 15 min", tapping 15 again went back to "47 meals", and 60+
 read "47 meals". Results under 30 read "2 people · 30 min · any cuisine" with 24 cards;
 tapping 30 min again in the filter bar gave "2 people · any time · any cuisine" and 47. With
-Garlic ticked at 360 px the Next note "24 meals · up to 30 min · 0 ready" fitted on one line.
-No console errors.
+Garlic ticked at 360 px I recorded that the Next note "24 meals · up to 30 min · 0 ready"
+fitted on one line, but I only looked at step 1, which has no Back button; §6.9 shows it did
+not fit on steps 2–6. No console errors.
+
+## 6.9 What the review of §6.8 caught before I pushed
+
+The three-reviewer check confirmed one high-severity defect my own check missed, found by
+all three reviewers:
+
+1. **The new note ran out of the Next button on steps 2–6 on phones.** Beside Back and Skip,
+   Next is about 146 px wide at 360 px, and "24 meals · up to 30 min · 0 ready" is 192 px. The
+   note was set to cut itself off with an ellipsis, but a centred column flex item is never
+   constrained, so the ellipsis never applied: the text spilled past both edges of the orange
+   button, white on white, and the count read "4 meals". The note now wraps inside the button,
+   breaking only at a "·" so "0 ready" stays together, with room above and below it.
+
+Also fixed:
+
+2. **Undo after Start fresh did not bring the saved kitchen back** (medium, from §6.5, found
+   while tracing Start fresh). When nothing was edited first, Undo put back the very object the
+   page started from, which the save guard skips, so the next reload lost the kitchen. Undo now
+   saves it directly.
+3. With 60+ selected, step 6 said "Tap your choice again for no limit." although 60+ already is
+   no limit; it now says "60+ min puts no limit on time."
+4. A comment claimed the Next count could "never again pass off a filtered list as the whole
+   collection", but cuisine and weight still narrow it unnamed; the comment now says so.
+   `assessment.md` still quoted the removed "Allow 60+ minutes"; it now quotes "Allow any
+   cooking time". And my §6.8 line about old saves said the 30 had been hidden from the
+   summary, which always showed it.
+
+Two findings were refuted: the "tap again" behaviour is announced correctly through
+`aria-pressed`, and tying hints to tile groups is an app-wide change, not a defect of this one.
+
+**Re-checked in the production build**, with Garlic ticked and 30 min chosen: on all seven
+steps at 320 px and at 375 px the note stays inside the button, on at most three lines at
+320 px, with 6 px below it. Start fresh, then Undo, left the Garlic kitchen in storage. Step 6
+read "60+ min puts no limit on time." with 60+ and "Tap your choice again for no limit." with
+30.
