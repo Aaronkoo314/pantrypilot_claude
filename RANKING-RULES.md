@@ -53,10 +53,20 @@ disagreed with its whole-dish macros on 9 of its 11 meals as a result.
 matchPercent = round(100 × ingredients you have ÷ ingredients the recipe needs)
 ```
 
-No weighting, no substitutions, no fuzzy matching. A clove of garlic counts exactly as much as
+No weighting and no fuzzy matching. A clove of garlic counts exactly as much as
 750 g of pork belly. This is the one figure the user can check without trusting us: the card
 prints "you have 7 of 11" and names the four it is *not* counting, under "Still need"; the detail
 screen lists the seven it is, under "You have (7)".
+
+**Swaps, since Problem Set 4.** A line also counts as "have" when the user owns a stand-in for it
+from `SUBSTITUTES` in `pantryData.js`: Chicken Thigh or Chicken Breast for Minced Chicken, Chicken
+Thigh for Chicken Breast, Pork Shoulder for Minced Pork, and White Rice and Jasmine Rice for each
+other. The list is hand-written and short on purpose; the comment above it records what was left
+out and why. A swap is never hidden: the card says "Using Chicken Thigh for Minced Chicken" and the
+detail screen prints "for Minced Chicken" under the stand-in. A stand-in the recipe already uses in
+its own right is never borrowed, and one owned item stands in for one line at most. Price and
+nutrition stay those of the recipe's own ingredient. The card and the detail screen read the same
+`matchMeal()` result, so their counts cannot disagree.
 
 **Known limit, unchanged from v1.** The pantry is a boolean: the app knows *whether* you have
 garlic, never *how much*. A meal can read 100% match and still leave you short at the stove.
@@ -269,7 +279,7 @@ for packaged products whose label figures round to zero. Both were failures firs
 
 | Rule | Derived or authored? | Scores anything? |
 | --- | --- | --- |
-| 2 · Ingredient match | Computed from two lists | No |
+| 2 · Ingredient match | Computed from two lists and the swap table | No |
 | 3 · Calories | Derived from the macros | No |
 | 4 · Weight band | Derived from calories | No |
 | 5 · Vegetarian | Derived from the ingredients | No |
@@ -279,10 +289,11 @@ for packaged products whose label figures round to zero. Both were failures firs
 | 9 · The two counts | Derived, each excluding its own filter | No |
 | 10 · The live USDA figure | **Fetched, not derived** | No — it ranks nothing |
 
-Three things are authored by a person and therefore need a person to check them: **the macros and
-times on all 47 meals**, **the ingredient quantities and base servings on those meals**, and
-**the 93 unit prices**. A fourth now needs watching rather than checking: **the live USDA lookup**,
-which nobody here controls and which can be empty, refused or unreachable on any given evening. Everything else in this table is arithmetic on those three — which means a
+Four things are authored by a person and therefore need a person to check them: **the macros and
+times on all 47 meals**, **the ingredient quantities and base servings on those meals**,
+**the 93 unit prices**, and **the swap table**, where one wrong entry makes a meal read "Nothing
+missing" when it is not. A fourth now needs watching rather than checking: **the live USDA lookup**,
+which nobody here controls and which can be empty, refused or unreachable on any given evening. Everything else in this table is arithmetic on those four — which means a
 wrong quantity reaches the screen as a wrong price with no arithmetic error anywhere. That is the shortest honest statement of where the human review has to go, and it is
 the same conclusion `REFLECTION.md` reached about v1 — the cheap work is the code, and the
 expensive work is the judgement nobody can delegate.

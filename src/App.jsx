@@ -148,7 +148,6 @@ export default function App() {
         <MealDetail
           key={activeMeal.id}
           meal={activeMeal}
-          ownedIds={setup.ingredientIds}
           initialServings={setup.people}
           onBack={() => setScreen('results')}
         />

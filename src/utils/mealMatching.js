@@ -3,7 +3,7 @@
  * No data lives here - everything comes from src/data/pantryData.js.
  */
 
-import { INGREDIENT_BY_ID, TIME_OPTIONS } from '../data/pantryData.js';
+import { INGREDIENT_BY_ID, SUBSTITUTES, TIME_OPTIONS } from '../data/pantryData.js';
 
 /*
  * The sorts.
@@ -67,9 +67,16 @@ export function defaultSortDir(sortId) {
 /**
  * Compare one meal against the ingredients the user says they have.
  * Returns the meal plus match information, without mutating the meal.
+ *
+ * A line the user does not own exactly still counts as "have" when they own
+ * one of its SUBSTITUTES. That line carries `substituteId`, so every screen can
+ * say which swap was assumed. A substitute is never one the recipe already
+ * uses in its own right, and each owned item stands in for one line at most.
  */
 export function matchMeal(meal, ownedIds) {
   const owned = ownedIds instanceof Set ? ownedIds : new Set(ownedIds);
+  const recipeIds = new Set(meal.ingredients.map((line) => line.id));
+  const usedAsSubstitute = new Set();
 
   const haveIngredients = [];
   const missingIngredients = [];
@@ -77,6 +84,14 @@ export function matchMeal(meal, ownedIds) {
   meal.ingredients.forEach((line) => {
     if (owned.has(line.id)) {
       haveIngredients.push(line);
+      return;
+    }
+    const substituteId = (SUBSTITUTES[line.id] || []).find(
+      (id) => owned.has(id) && !recipeIds.has(id) && !usedAsSubstitute.has(id)
+    );
+    if (substituteId) {
+      usedAsSubstitute.add(substituteId);
+      haveIngredients.push({ ...line, substituteId });
     } else {
       missingIngredients.push(line);
     }
@@ -99,6 +114,17 @@ export function matchMeal(meal, ownedIds) {
 /** Human-readable names for a list of ingredient lines. */
 export function ingredientNames(lines) {
   return lines.map((line) => (INGREDIENT_BY_ID[line.id] || {}).name || line.id);
+}
+
+/** "Chicken Thigh for Minced Chicken" for each line matched through a swap. */
+export function swapNotes(lines) {
+  return lines
+    .filter((line) => line.substituteId)
+    .map((line) => {
+      const stand = (INGREDIENT_BY_ID[line.substituteId] || {}).name || line.substituteId;
+      const recipe = (INGREDIENT_BY_ID[line.id] || {}).name || line.id;
+      return `${stand} for ${recipe}`;
+    });
 }
 
 /* ---------------------------------------------------------------- *

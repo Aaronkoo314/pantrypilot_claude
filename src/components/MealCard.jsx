@@ -1,5 +1,5 @@
 import { CUISINE_BY_ID, WEIGHT_BAND_BY_ID } from '../data/pantryData.js';
-import { formatMinutes, formatPrice, ingredientNames } from '../utils/mealMatching.js';
+import { formatMinutes, formatPrice, ingredientNames, swapNotes } from '../utils/mealMatching.js';
 
 /**
  * Section component: one meal summary card on the recommendations screen.
@@ -12,6 +12,7 @@ import { formatMinutes, formatPrice, ingredientNames } from '../utils/mealMatchi
  */
 export default function MealCard({ meal, onOpen }) {
   const missing = ingredientNames(meal.missingIngredients);
+  const swaps = swapNotes(meal.haveIngredients);
   const cuisine = CUISINE_BY_ID[meal.cuisine];
   const band = WEIGHT_BAND_BY_ID[meal.weightBand];
 
@@ -74,6 +75,11 @@ export default function MealCard({ meal, onOpen }) {
         {meal.isReadyToCook && <span className="tag tag-ready">Nothing missing</span>}
       </div>
 
+      {swaps.length > 0 && (
+        <p className="missing-line swap-line">
+          <span className="missing-label">Using</span> {swaps.join(', ')}
+        </p>
+      )}
       {missing.length > 0 && (
         <p className="missing-line">
           <span className="missing-label">Still need</span> {missing.join(', ')}

@@ -796,6 +796,18 @@ button {
   min-width: 0;
 }
 
+/* "for Minced Chicken" after a swapped ingredient: the assumption stays visible. */
+.row-swap {
+  color: var(--ink-faint);
+  font-size: 14px;
+}
+
+/* A swap is something the user has, so it takes the herb colour, not amber. */
+.swap-line .missing-label {
+  background: var(--herb-soft);
+  color: var(--herb);
+}
+
 .row-qty {
   flex: none;
   font-weight: 700;

@@ -725,3 +725,103 @@ wrong, and the check that would have told me was an assertion I had not written.
 
 The re-run asserts each step and prints whether it found the element. `findBtn:true, card:true,
 garlicChip:true` is now part of the evidence rather than an assumption behind it.
+
+---
+
+# Problem Set 4 — revising from my group's heuristic evaluation
+
+Findings came from three groupmates (MML, IKD, CCH) on the Disqus board. Each
+repair below records the Step 5 "argue against my repair" prompt I gave the
+coding agent (Claude Code), the agent's arguments, what I chose and why, and
+how I checked it on the live address.
+
+## 6.1 Repair 1 — ingredients I have are counted through a short swap table
+
+**Finding:** exact-name matching (MML Finding 1, IKD Finding 3; both severity 3,
+heuristic #2). Also my own Finding 2 in predictions.md, where I had put the
+cause down to too few recipes.
+
+**Prompt I gave the agent (Step 5 template, filled in):**
+
+> ROLE: You are a sceptical senior developer and usability reviewer working in my
+> existing project. Before you write any code, your job is to argue against the repair
+> I propose.
+>
+> CONTEXT:
+> - Live address: https://pantrypilot-phi.vercel.app
+> - Who the product is for, and what it does for them: People who do not want to spend a long time deciding what to eat and cook when they get home each day, people who do one large weekly shop, and international students saving money; it helps them decide what to cook from the ingredients they already have.
+> - The finding, in its six lines: [MML Finding 1, pasted in full]
+> - The evidence behind it: Raised independently by 2 of the 3 groupmates who reviewed the product (MML and IKD), both at severity 3. IKD's example: they ticked Jasmine Rice, and "Toasted Rice & Lime Pork Larb" said "you have 0 of 11" and listed White Rice under Still need. It also matches my own Finding 2 in predictions.md (severity 3), where I had put the cause down to too few recipes rather than exact-name matching.
+> - The repair I propose: Ingredients a normal cook would treat as the same, or as an easy swap, count as "have", and the meal shows which swap it assumed. An ingredient the user has ticked is recognised in every recipe that can use it.
+>
+> GOAL / OUTPUT / GUARDRAILS: as in the Step 5 template.
+
+**The agent's arguments (summarised):**
+
+1. *Which problem does it solve?* Mostly the groupmates' one ("an ingredient I
+   have is not counted"). It will not fix the "0 ready" part of MML's finding:
+   recipes need 7–12 ingredients and she ticked 5. Judging the repair by "more
+   meals are ready" would be solving my own Finding 2 belief, not their finding.
+2. *Screen or system?* Matching runs entirely in the front end
+   (`src/utils/mealMatching.js`, exact `owned.has(line.id)`); nothing goes
+   through `api/`. What is missing is data about which ingredients stand in for
+   which, so the repair belongs in the data and matching layer. Risk found:
+   `MealDetail.jsx` recomputed have/need with its own `owned.has`, so fixing
+   only `matchMeal` would make the card and the detail page disagree.
+3. *A heuristic it could break:* #2 and trust, if swaps are too broad (chicken
+   wings counted as minced chicken, a confidently wrong "Nothing missing"); #4,
+   if price and nutrition quietly change with the swap; #1, if the swap is not
+   shown.
+4. *Smallest alternative:* no fuzzy matching and no "whole group counts"; a
+   short hand-written swap table limited to swaps the recipes actually use,
+   one result shared by the card and the detail page, swap shown by name,
+   price and nutrition left on the recipe's own ingredient.
+5. *How to check:* MML's five ingredients → Thunder Basil shows Chicken Thigh
+   and White Rice under You have, labelled, with the card count equal to the
+   detail count; IKD's Jasmine Rice → Larb goes from 0 of 11 to 1 of 11.
+   Expect "0 ready" to stay 0 and say so in the reply.
+
+**What I chose first:** option (b), the short table, and a meal that relies on a
+swap counts as ready.
+
+**Then I asked for more.** I did not want to fix only the pairs my groupmates
+happened to hit, so I asked for every swap a cook would make (pork, beef,
+vegetables, tofu and so on) and for seasonings whose absence barely changes a
+dish to stop blocking "ready". Because that was a new repair, the agent argued
+against it before writing code, and first had every candidate checked:
+
+- Round 1: three agents, one per ingredient family, proposed 30 same-family
+  swaps; a sceptic cut 5.
+- Round 2: two sceptics with different lenses re-checked the 25 left. The
+  "cook test" (follow this recipe's exact steps with only the stand-in) refuted
+  24; the "truthfulness" lens (would "Using X for Y · Nothing missing" be true to
+  a home cook?) refuted 11. They disagreed most on hand-chopping, which the cook
+  test counted as a method change even though MML's finding says a real cook
+  would happily do it.
+- The agent sorted them into three tiers: refuted by both, or the dish is named
+  after the ingredient → dropped; the only objection is "chop or grind it
+  yourself" → safe; the rest → disputed, my call.
+- Cross-protein swaps (pork mince for chicken mince, squid for prawns) were kept
+  out of the table from the start and left to me.
+
+**What I chose in the end:** the smallest version, tier A only, no cross-protein
+swaps, and nothing from the disputed tier (shallots ← onion, chili flakes ← red
+chilli, tomato paste ← tomatoes, the two vinegars, peanut butter ← roasted
+peanuts). The seasonings part became its own repair (§6.2).
+
+**Table:** Minced Chicken ← Chicken Thigh, Chicken Breast; Chicken Breast ←
+Chicken Thigh; Minced Pork ← Pork Shoulder; Jasmine Rice ↔ White Rice.
+
+**Where the agent agreed too readily:** in round 1 the sceptic kept 25 of 30
+swaps; only a second sceptic told to test each swap against the recipe's own
+steps broke most of them. Left to its first review, the table would have told
+people they could make "Charred Salmon Tortillas" with cod and "Chilli-Lime"
+dishes with lemon.
+
+**Local check before pushing (production build, 430 px wide):** MML's five
+ingredients → Thunder Basil card "33% match, you have 4 of 12" (before: 2 of 12)
+with "Using Chicken Thigh for Minced Chicken, White Rice for Jasmine Rice"; the
+detail page lists the same 4 under You have, each swap labelled "for …". Mustard
+Herb Chicken went from 0 of 7 to 1 of 7 ("Chicken Thigh for Chicken Breast").
+Pork Satay, which lists Pork Shoulder itself, borrows nothing. The meal count
+still read "24 meals · 0 ready".

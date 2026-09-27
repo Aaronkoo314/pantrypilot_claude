@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { CUISINE_BY_ID, WEIGHT_BAND_BY_ID } from '../data/pantryData.js';
+import { CUISINE_BY_ID, INGREDIENT_BY_ID, WEIGHT_BAND_BY_ID } from '../data/pantryData.js';
 import { formatMinutes, formatPrice, scaleMeal } from '../utils/mealMatching.js';
 import SourcedNutrition from './SourcedNutrition.jsx';
 import DisqusThread from './DisqusThread.jsx';
@@ -30,7 +30,7 @@ const PAGES = [
  * Screen 3: everything the user needs to actually cook the meal,
  * including a serving-size control that rescales quantities, price and totals.
  */
-export default function MealDetail({ meal, ownedIds, initialServings, onBack }) {
+export default function MealDetail({ meal, initialServings, onBack }) {
   const [servings, setServings] = useState(
     Math.min(MAX_SERVINGS, Math.max(MIN_SERVINGS, initialServings))
   );
@@ -43,11 +43,18 @@ export default function MealDetail({ meal, ownedIds, initialServings, onBack }) 
     window.scrollTo(0, 0);
   }, [pageIndex]);
 
-  const owned = useMemo(() => new Set(ownedIds), [ownedIds]);
+  // Have / need comes from matchMeal, the same result the meal card shows, so
+  // a swap counted on the card is counted here too.
+  const haveById = useMemo(
+    () => new Map(meal.haveIngredients.map((line) => [line.id, line])),
+    [meal]
+  );
   const scaled = useMemo(() => scaleMeal(meal, servings), [meal, servings]);
 
-  const haveLines = scaled.ingredients.filter((line) => owned.has(line.id));
-  const needLines = scaled.ingredients.filter((line) => !owned.has(line.id));
+  const haveLines = scaled.ingredients
+    .filter((line) => haveById.has(line.id))
+    .map((line) => ({ ...line, substituteId: haveById.get(line.id).substituteId }));
+  const needLines = scaled.ingredients.filter((line) => !haveById.has(line.id));
   const shoppingCost = needLines.reduce((total, line) => total + line.linePrice, 0);
 
   const cuisine = CUISINE_BY_ID[meal.cuisine];
@@ -60,15 +67,24 @@ export default function MealDetail({ meal, ownedIds, initialServings, onBack }) 
   const page = PAGES[pageIndex].id;
 
   function ingredientRow(line, kind) {
+    const stand = line.substituteId ? INGREDIENT_BY_ID[line.substituteId] : null;
     return (
       <li className={`ingredient-row row-${kind}`} key={line.id}>
         <span className="row-mark" aria-hidden="true">
           {kind === 'have' ? '✓' : '+'}
         </span>
         <span className="row-emoji" aria-hidden="true">
-          {line.ingredient.emoji}
+          {(stand || line.ingredient).emoji}
         </span>
-        <span className="row-name">{line.ingredient.name}</span>
+        <span className="row-name">
+          {stand ? (
+            <>
+              {stand.name} <span className="row-swap">for {line.ingredient.name}</span>
+            </>
+          ) : (
+            line.ingredient.name
+          )}
+        </span>
         <span className="row-qty">{line.display}</span>
         <span className="row-price">{formatPrice(line.linePrice)}</span>
       </li>

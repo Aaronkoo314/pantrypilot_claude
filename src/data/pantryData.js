@@ -162,6 +162,38 @@ export const INGREDIENT_BY_ID = INGREDIENTS.reduce((map, item) => {
   return map;
 }, {});
 
+/*
+ * Swaps a home cook makes without changing the dish: recipe ingredient id ->
+ * ingredients that can stand in for it, in the order they are tried.
+ *
+ * Matching was exact-id only, so a user who ticked Chicken Thigh was told to
+ * buy Minced Chicken, and Jasmine Rice did not count for White Rice (PS4
+ * findings from MML and IKD). Every same-family swap across all 93
+ * ingredients was then proposed and put to two rounds of sceptical review
+ * against the recipes' own steps; 30 were proposed and these are the ones no
+ * reviewer could break. The only extra work any of them asks is chopping or
+ * mincing by hand.
+ *
+ * Left out on purpose, so the list does not grow back by accident:
+ * - a swap for an ingredient the dish is named after (salmon in Charred Salmon
+ *   Tortillas, lime in the lime dishes, short rib, bok choy, lamb chops);
+ * - a swap that changes the cut, time or doneness test (bone-in for boneless,
+ *   breast for thigh in the 35-minute thigh tray, a whole bass for two
+ *   mackerel, silken tofu for firm);
+ * - any swap across protein families or across the vegetarian line, which
+ *   turns the recipe into a different dish.
+ *
+ * A swap only changes whether the user has the item; price and nutrition stay
+ * those of the recipe's own ingredient.
+ */
+export const SUBSTITUTES = {
+  'chicken-mince': ['chicken-thigh', 'chicken-breast'], // chop it yourself
+  'chicken-breast': ['chicken-thigh'],
+  'pork-mince': ['pork-shoulder'], // chop it yourself
+  'jasmine-rice': ['rice'],
+  rice: ['jasmine-rice'],
+};
+
 /* ---------------------------------------------------------------- *
  * 2. USER-FACING OPTION LISTS
  * ---------------------------------------------------------------- */
