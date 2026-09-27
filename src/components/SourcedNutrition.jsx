@@ -129,10 +129,15 @@ export default function SourcedNutrition({ ingredients }) {
           <p className="sourced-state">Checking USDA FoodData Central for {selectedName}…</p>
         )}
 
+        {/* Since PS4 every ingredient is matched to one record chosen by hand,
+            so "empty" means USDA holds no record of this food as the recipe
+            uses it - not that a search missed. A near match used to be shown
+            here instead (canned luncheon meat for Minced Chicken). */}
         {status === 'empty' && (
           <p className="sourced-state">
-            USDA FoodData Central publishes no record matching “{selectedName}”, so this ingredient has
-            no sourced figure. Everything shown for it above is our own estimate.
+            USDA FoodData Central has no record of this exact food, so {selectedName} has no sourced
+            figure. We would rather say so than show a record for something else. Everything shown
+            for it above is our own estimate.
           </p>
         )}
 
@@ -223,8 +228,9 @@ export default function SourcedNutrition({ ingredients }) {
               )}
               {payload.record.dataType ? `, ${payload.record.dataType}` : ''}
               {payload.record.publishedDate ? `, published ${payload.record.publishedDate}` : ''}.
-              We ask FoodData Central for its analysed reference records only, not for packaged
-              products, because label figures are rounded on the pack and go wrong when scaled.
+              Each ingredient is matched by hand to one of FoodData Central’s analysed reference
+              records, not to packaged products, because label figures are rounded on the pack and go
+              wrong when scaled.
             </p>
           </>
         )}

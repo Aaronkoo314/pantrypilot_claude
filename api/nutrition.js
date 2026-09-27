@@ -1,4 +1,13 @@
 import { INGREDIENT_BY_ID } from '../src/data/pantryData.js';
+import { USDA_RECORDS } from '../src/data/usdaRecords.js';
+
+/** The by-id record dates as "4/1/2019"; the screen prints "2019-04-01", as the search used to. */
+function isoDate(value) {
+  const match = typeof value === 'string' ? /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(value) : null;
+  if (!match) return typeof value === 'string' ? value : null;
+  const [, month, day, year] = match;
+  return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+}
 
 /**
  * GET /api/nutrition?id=chicken-breast
@@ -75,8 +84,13 @@ export default async function handler(req, res) {
   //    classmates to try to break the product, so that is not a hypothetical.
   //
   // Bounded at 93 distinct upstream calls, all of them cacheable.
+  //
+  // Own keys only. INGREDIENT_BY_ID is a plain object, so a bare lookup let
+  // "?id=constructor" through as if it were an ingredient and sent "Object" to
+  // USDA - an open door in exactly the closed set described above (PS4).
   const id = String(req.query.id || '').trim();
-  const known = id ? INGREDIENT_BY_ID[id] : null;
+  const known =
+    id && Object.prototype.hasOwnProperty.call(INGREDIENT_BY_ID, id) ? INGREDIENT_BY_ID[id] : null;
 
   if (!known) {
     res.setHeader('Cache-Control', 'no-store');
@@ -88,24 +102,28 @@ export default async function handler(req, res) {
 
   const ingredient = known.name;
 
-  // requireAllWords=true is load-bearing, not a refinement. Without it the
-  // default fuzzy search NEVER returns nothing: asking for a nonsense string
-  // comes back 200 with 111,423 hits and confident macros for oats. That is a
-  // failure wearing a success code, and it would put another food's numbers on
-  // screen under a USDA citation. With it, a miss is an honest empty result.
+  // One record per ingredient, chosen by hand (src/data/usdaRecords.js). This
+  // used to search by name and take the first hit, and a search can only match
+  // words: "Minced Chicken" came back as canned luncheon meat, "Potatoes" as
+  // potato bread, "Milk" as milk crackers - about a quarter of the records
+  // shown were another food (PS4 finding from MML). A pinned record is the
+  // same food every time, and an ingredient USDA does not hold as that food
+  // has no record at all, which is said on screen rather than papered over.
+  const fdcId = Object.prototype.hasOwnProperty.call(USDA_RECORDS, id) ? USDA_RECORDS[id] : null;
+
+  if (!fdcId) {
+    res.setHeader('Cache-Control', 'public, s-maxage=86400, stale-while-revalidate=604800');
+    return res.status(200).json({
+      state: 'empty',
+      query: ingredient,
+      reason: 'no-exact-record',
+    });
+  }
+
+  // format=full carries every nutrient with its numeric id and derivation.
   const url =
-    'https://api.nal.usda.gov/fdc/v1/foods/search' +
-    '?query=' + encodeURIComponent(ingredient) +
-    '&requireAllWords=true' +
-    // Laboratory records only. Without this the search is dominated by Branded
-    // records, which are manufacturer label data rather than measurements: the
-    // first result for "garlic" was a packaged product reporting 0 g of protein
-    // and 167 kcal, because the label rounded to zero on a small serving and
-    // FoodData Central scaled that up to 100 g. Real garlic is 6.6 g of protein
-    // and 143 kcal. Foundation and SR Legacy are the analysed reference sets,
-    // and restricting to them took "garlic" from thousands of hits to eight.
-    '&dataType=' + encodeURIComponent('Foundation,SR Legacy') +
-    '&pageSize=1' +
+    `https://api.nal.usda.gov/fdc/v1/food/${fdcId}` +
+    '?format=full' +
     '&api_key=' + encodeURIComponent(key.trim());
 
   let upstream;
@@ -135,21 +153,20 @@ export default async function handler(req, res) {
     });
   }
 
-  const data = await upstream.json();
-  const food = Array.isArray(data.foods) ? data.foods[0] : null;
+  const food = await upstream.json();
 
-  // An honest empty. The user asked for something USDA does not hold — galangal,
-  // shrimp paste, laksa paste — and saying so is better than showing a near miss.
-  if (!food) {
-    res.setHeader('Cache-Control', 'public, s-maxage=86400, stale-while-revalidate=604800');
-    return res.status(200).json({
-      state: 'empty',
-      query: ingredient,
-      totalHits: data.totalHits || 0,
-    });
-  }
-
-  const nutrients = Array.isArray(food.foodNutrients) ? food.foodNutrients : [];
+  // The by-id record nests each nutrient ({ nutrient: { id, unitName }, amount,
+  // foodNutrientDerivation }); readNutrient reads the flat shape the search
+  // used to return, so flatten it once here.
+  const nutrients = (Array.isArray(food.foodNutrients) ? food.foodNutrients : [])
+    .filter((n) => n && n.nutrient)
+    .map((n) => ({
+      nutrientId: n.nutrient.id,
+      // The search rounded to two decimals; the record carries 0.851875.
+      value: typeof n.amount === 'number' ? Math.round(n.amount * 100) / 100 : n.amount,
+      unitName: n.nutrient.unitName ? n.nutrient.unitName.toUpperCase() : null,
+      derivationDescription: (n.foodNutrientDerivation && n.foodNutrientDerivation.description) || null,
+    }));
   const energyGeneral = readNutrient(nutrients, ENERGY_GENERAL);
   const energySpecific = readNutrient(nutrients, ENERGY_SPECIFIC);
   const energyLegacy = readNutrient(nutrients, ENERGY_LEGACY);
@@ -166,7 +183,7 @@ export default async function handler(req, res) {
       fdcId: food.fdcId,
       description: food.description || null,
       dataType: food.dataType || null,
-      publishedDate: food.publishedDate || null,
+      publishedDate: isoDate(food.publicationDate),
       // fdc.nal.usda.gov publishes every record at a stable address, so the
       // reader can open the one we cited rather than take our word for it.
       url: food.fdcId ? `https://fdc.nal.usda.gov/food-details/${food.fdcId}/nutrients` : null,
@@ -175,11 +192,14 @@ export default async function handler(req, res) {
       protein: readNutrient(nutrients, NUTRIENT_IDS.protein),
       carbohydrate: readNutrient(nutrients, NUTRIENT_IDS.carbohydrate),
       fat: readNutrient(nutrients, NUTRIENT_IDS.fat),
-      energy: energy ? { ...energy, basis: energyGeneral ? 'Atwater General Factors' : 'Energy' } : null,
+      // Whole kcal, as the search returned them.
+      energy: energy
+        ? { ...energy, value: Math.round(energy.value), basis: energyGeneral ? 'Atwater General Factors' : 'Energy' }
+        : null,
     },
     // Shown so the screen can say the two figures disagree rather than hiding it.
     energyAlternative: energySpecific
-      ? { value: energySpecific.value, unit: energySpecific.unit, basis: 'Atwater Specific Factors' }
+      ? { value: Math.round(energySpecific.value), unit: energySpecific.unit, basis: 'Atwater Specific Factors' }
       : null,
     fetchedAt: new Date().toISOString(),
   });

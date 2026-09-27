@@ -102,7 +102,7 @@ output directory `dist`).
 
 - **One back end, added for Problem Set 2.** Two serverless functions at `api/`, and no
   database, no accounts and no analytics. `api/nutrition.js` asks USDA FoodData Central for one
-  ingredient's published nutrient record; `api/health.js` reports whether the credential is
+  ingredient's published nutrient record, the one pinned to that ingredient by hand; `api/health.js` reports whether the credential is
   configured and what the upstream answered.
 - **The credential never leaves the server.** The only call that carries it happens inside `api/`,
   and the page makes no request to USDA itself.
@@ -135,7 +135,8 @@ output directory `dist`).
 | File | What it contains |
 | --- | --- |
 | `api/health.js` | **Serverless function.** Reports whether `USDA_API_KEY` is configured and what the upstream answered, and nothing further about the credential. `Cache-Control: no-store`, because the answer is about now. |
-| `api/nutrition.js` | **Serverless function.** Takes a known ingredient id, validated against the catalogue before the credential is sent anywhere, and returns one USDA FoodData Central record. Restricted to analysed reference records, with `requireAllWords=true` so a miss is an honest empty rather than an unrelated food. |
+| `api/nutrition.js` | **Serverless function.** Takes a known ingredient id, validated against the catalogue (own keys only) before the credential is sent anywhere, and returns the one USDA FoodData Central record pinned to it in `src/data/usdaRecords.js`, fetched by id. An ingredient with no pinned record gets an honest empty without calling USDA. |
+| `src/data/usdaRecords.js` | The hand-chosen USDA record for each of the 93 ingredients (79 records, 14 nulls): the same food in the form the recipe uses it, never a product that only shares its words. |
 | `index.html` | Vite entry page with the `#root` mount point, and the Microsoft Clarity tag, gated to the live hostname. |
 | `package.json` | React 18 + Vite dependencies and the `dev` / `build` / `preview` scripts. |
 | `vite.config.js` | Standard Vite + React plugin config. |

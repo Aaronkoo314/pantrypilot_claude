@@ -1184,3 +1184,67 @@ steps at 320 px and at 375 px the note stays inside the button, on at most three
 320 px, with 6 px below it. Start fresh, then Undo, left the Garlic kitchen in storage. Step 6
 read "60+ min puts no limit on time." with 60+ and "Tap your choice again for no limit." with
 30.
+
+**Live check after pushing §6.8–6.9** (Sunday 27 September 2026, on
+https://pantrypilot-phi.vercel.app, at 360 px): a first visit read "47 meals"; step 6 had nothing
+selected and said "No limit until you pick one."; choosing 30 min gave "24 meals · up to 30 min";
+with Garlic ticked, step 3's note "24 meals · up to 30 min · 0 ready" sat inside the button;
+results read "2 people · 30 min · any cuisine" with 24 meals. `/api/health` answered 200.
+
+## 6.10 Repair 6 — every sourced figure is the food it names
+
+**Finding:** MML Finding 2 (#2 Match Between the System and the Real World, severity 3, system):
+the "One figure you can check" for Minced Chicken was "Luncheon meat, pork and chicken, minced,
+canned, includes Spam Lite". Second row of my table; not in predictions.md. IKD, on the other
+hand, named this same panel as the thing that works, for citing its record and saying plainly
+when a lookup fails.
+
+**Prompt I gave the agent:** the Step 5 template with MML's six lines and repair, and IKD's praise
+as evidence against.
+
+**What the agent did before arguing:** it looked up all 93 ingredients on the live
+`/api/nutrition`. 67 returned a record and 26 none, and about 23 of the 67 were another food:
+Minced Pork was the same Spam; Chicken Breast was sliced lunchmeat, Chicken Thigh skin only,
+Potatoes potato bread, Milk milk crackers, Long Beans cellophane noodles, Rolled Oats oat-bran
+dinner rolls, Eggs egg white, White Rice rice flour, Chickpeas chickpea flour, and so on. Because
+the panel opens on a recipe's first ingredient, 12 of the 47 recipes opened on a wrong record. The
+cause was in `api/nutrition.js`: search by name, `requireAllWords=true`, first hit.
+
+**The agent's arguments (summarised):**
+
+1. *Which problem does it solve?* MML's, but the finding is far bigger than the one case she saw:
+   one reviewer uncovered a whole class of fault. Its reach is wider than "severity 3, met by one".
+2. *Screen or system?* System, as MML said; rewording the panel would only hide it.
+3. *A heuristic it could break:* IKD's praised honesty (#1, #9) if the record id, link and error
+   wording changed; more empty panels if matching were only made stricter; and a day of edge
+   caching (`s-maxage=86400`, `stale-while-revalidate=604800`) that might keep the wrong records
+   after a deploy.
+4. *Smallest alternative:* A, pin one hand-chosen record per ingredient and fetch it by id, with
+   null where USDA has no such food; B, reject search results that look like another food; C, a
+   better search word each. It recommended A, which also closes the `?id=constructor` hole found
+   in §6.6.
+5. *How to check:* MML's Thunder Basil → Nutrition → Minced Chicken; the first ingredient of each
+   of the 12 recipes; the 93-ingredient sweep again; IKD's sea bass still record 175142.
+
+**What I chose:** A; an honest empty where there is no exact food; and the `constructor` hole
+closed in the same change.
+
+**How the records were chosen:** with my permission the agent downloaded USDA's two public lists
+(SR Legacy, 6.1 MB, and Foundation, 3.6 MB; public domain) into its scratchpad and built a table of
+8,229 foods with their calories and protein. Four agents each chose records for about 24
+ingredients (same food, in the form the recipe uses it, raw or plain, no product that only shares
+its words, a broader generic only when its description visibly says what it is, null otherwise),
+and a sceptic per batch tried to refute every choice. 92 of 93 were agreed. The one dispute was
+Beef Sirloin: US "top sirloin" against the striploin that "sirloin" means in Singapore; I kept top
+sirloin, the current record, because its description says sirloin. I also moved Silken Tofu from
+"silken, firm" to "silken, soft", because both recipes use it trembling or in curds. Result: 28
+records kept, 51 new, 14 null (galangal, kaffir lime leaves, mixed herbs, Dijon mustard, dark soy,
+Shaoxing wine, rice vinegar, chilli bean paste, five spice, both curry pastes, palm sugar, tamarind
+paste, dried shrimp).
+
+**Local check before pushing:** four calls with USDA's public DEMO_KEY first confirmed the shape
+of a record fetched by id. Then the handler itself, run locally against USDA: Minced Chicken →
+record 171116 "Chicken, ground, raw", SR Legacy, 17.44 g protein, 143 kcal; Aubergine → 2685577
+"Eggplant, raw", Foundation, 26 kcal by Atwater General with 22 by Specific; Galangal → an honest
+empty without calling USDA; `constructor` and `__proto__` → 400. Figures are rounded as the search
+rounded them, so the panel looks as it did.

@@ -265,6 +265,14 @@ records what that cost.
 
 This was a decision rather than an omission, so it belongs in this file.
 
+**Which record, since Problem Set 4.** Each ingredient is matched by hand to one record in
+`src/data/usdaRecords.js`, and the function fetches that record by its id. It used to search by
+name and take the first hit, which can only match words: "Minced Chicken" came back as canned
+luncheon meat and "Potatoes" as potato bread, and a sweep of all 93 found about a quarter of the
+records shown were another food. The table holds 79 records, each the same food in the form the
+recipe uses, and 14 nulls, where USDA has no record of that food and the panel says so. Like the
+swap table and the optional flags, it is authored and needs a person to check it.
+
 The tempting version is to recompute each meal's calories from real per-ingredient data and let
 the weight band, the calorie sort and the light/medium/heavy filter follow. That would make the
 band mean something. It would also mean **a rule that decides what the user sees depends on a
@@ -301,11 +309,12 @@ for packaged products whose label figures round to zero. Both were failures firs
 | 9 · The two counts | Derived, each excluding its own filter | No |
 | 10 · The live USDA figure | **Fetched, not derived** | No — it ranks nothing |
 
-Four things are authored by a person and therefore need a person to check them: **the macros and
+Five things are authored by a person and therefore need a person to check them: **the macros and
 times on all 47 meals**, **the ingredient quantities and base servings on those meals**,
-**the 93 unit prices**, and **the swap table and the optional flags**, where one wrong entry makes
-a meal read "Nothing missing" when it is not. A fifth now needs watching rather than checking: **the live USDA lookup**,
-which nobody here controls and which can be empty, refused or unreachable on any given evening. Everything else in this table is arithmetic on those four — which means a
+**the 93 unit prices**, **the swap table and the optional flags**, where one wrong entry makes
+a meal read "Nothing missing" when it is not, and **the USDA record chosen for each ingredient**,
+where one wrong entry puts another food's numbers under a USDA citation. A sixth needs watching rather than checking: **the live USDA lookup**,
+which nobody here controls and which can be empty, refused or unreachable on any given evening. Everything else in this table is arithmetic on those five — which means a
 wrong quantity reaches the screen as a wrong price with no arithmetic error anywhere. That is the shortest honest statement of where the human review has to go, and it is
 the same conclusion `REFLECTION.md` reached about v1 — the cheap work is the code, and the
 expensive work is the judgement nobody can delegate.
