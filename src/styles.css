@@ -148,6 +148,10 @@ button {
   color: var(--amber);
 }
 
+.group-optional {
+  color: var(--ink-soft);
+}
+
 .count-pill {
   flex: none;
   min-width: 40px;
@@ -784,6 +788,16 @@ button {
 
 .row-need .row-mark {
   background: var(--amber);
+}
+
+/* Optional lines the user lacks: shown, but quieter than what they must buy. */
+.row-optional {
+  background: var(--cream);
+  border: 1px dashed var(--line);
+}
+
+.row-optional .row-mark {
+  background: var(--ink-faint);
 }
 
 .row-emoji {

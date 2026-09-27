@@ -58,6 +58,20 @@ No weighting and no fuzzy matching. A clove of garlic counts exactly as much as
 prints "you have 7 of 11" and names the four it is *not* counting, under "Still need"; the detail
 screen lists the seven it is, under "You have (7)".
 
+**Optional lines, since Problem Set 4.** A recipe line marked `optional: true` in `pantryData.js`
+(103 of them, across 43 meals: garnishes, finishing herbs and oils, a pinch among several
+seasonings) never blocks "Nothing missing" and is left out of the match:
+
+```
+matchPercent = round(100 × required lines you have ÷ required lines)
+```
+
+The card prints "you have 7 of 11 · +2 optional"; the detail screen lists what you lack under
+"Optional, you can leave out", with what buying them would add, and the "missing" total covers
+required lines only. Optional is set per line, never per ingredient, because garlic can be a
+garnish in one dish and the point of another. Price and calories still include every line, so they
+describe the recipe as written.
+
 **Swaps, since Problem Set 4.** A line also counts as "have" when the user owns a stand-in for it
 from `SUBSTITUTES` in `pantryData.js`: Chicken Thigh or Chicken Breast for Minced Chicken, Chicken
 Thigh for Chicken Breast, Pork Shoulder for Minced Pork, and White Rice and Jasmine Rice for each
@@ -279,7 +293,7 @@ for packaged products whose label figures round to zero. Both were failures firs
 
 | Rule | Derived or authored? | Scores anything? |
 | --- | --- | --- |
-| 2 · Ingredient match | Computed from two lists and the swap table | No |
+| 2 · Ingredient match | Computed from two lists, the swap table and the optional flags | No |
 | 3 · Calories | Derived from the macros | No |
 | 4 · Weight band | Derived from calories | No |
 | 5 · Vegetarian | Derived from the ingredients | No |
@@ -291,8 +305,8 @@ for packaged products whose label figures round to zero. Both were failures firs
 
 Four things are authored by a person and therefore need a person to check them: **the macros and
 times on all 47 meals**, **the ingredient quantities and base servings on those meals**,
-**the 93 unit prices**, and **the swap table**, where one wrong entry makes a meal read "Nothing
-missing" when it is not. A fourth now needs watching rather than checking: **the live USDA lookup**,
+**the 93 unit prices**, and **the swap table and the optional flags**, where one wrong entry makes
+a meal read "Nothing missing" when it is not. A fourth now needs watching rather than checking: **the live USDA lookup**,
 which nobody here controls and which can be empty, refused or unreachable on any given evening. Everything else in this table is arithmetic on those four — which means a
 wrong quantity reaches the screen as a wrong price with no arithmetic error anywhere. That is the shortest honest statement of where the human review has to go, and it is
 the same conclusion `REFLECTION.md` reached about v1 — the cheap work is the code, and the

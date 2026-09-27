@@ -825,3 +825,59 @@ detail page lists the same 4 under You have, each swap labelled "for …". Musta
 Herb Chicken went from 0 of 7 to 1 of 7 ("Chicken Thigh for Chicken Breast").
 Pork Satay, which lists Pork Shoulder itself, borrows nothing. The meal count
 still read "24 meals · 0 ready".
+
+## 6.2 Repair 2 — seasonings and garnishes no longer block "ready"
+
+**Finding:** the "0 ready" part of MML Finding 1 ("From step 1 the Next button
+already said '24 meals · 0 ready' … I did have what I needed, and the app told
+me I didn't"). The repair line was already in my own Finding 2 in
+predictions.md, so this is a first-row repair and I say so in my reply and my
+analysis.
+
+**What I asked for:** seasonings or extras whose absence barely changes the dish
+should not stop a meal from being ready.
+
+**The agent's arguments against it (Step 5, before any code):**
+
+1. *Which problem does it solve?* Mostly my own belief, not the finding. The
+   agent simulated my three groupmates' actual kitchens: with every swap and
+   every optional line, all three still see 0 ready meals, and the fewest items
+   still needed drops by only one or two (MML 7 → 5, IKD 6 → 5, CCH 5 → 4). The
+   real cause of "0 ready" is that recipes need 8–15 lines, including oil, soy,
+   sugar and garlic, while people tick 2–7. So I should not tell MML that "0
+   ready" is fixed.
+2. *Screen or system?* The same front-end data and matching layer as §6.1.
+3. *A heuristic it could break:* #2 and trust again (calling a dish "Nothing
+   missing" without the thing it is named after); #4, if "you have N of M" on
+   the card and "You have (N)" on the detail screen count optional lines
+   differently; #1, if the screen does not say which lines it treated as
+   optional.
+4. *Smallest alternative:* mark lines optional per recipe, not per ingredient;
+   count required lines only in "N of M" and show "+K optional" beside it; split
+   the detail list into "You still need" and "Optional, you can leave out"; keep
+   the missing-items total to required lines.
+5. *How to check:* MML's five ingredients → cards read "you have N of M ·
+   +K optional"; the detail screen's "You have (N)" matches the card; optional
+   lines sit in their own section; "0 ready" stays 0.
+
+**How the list was made:** four agents read all 47 recipes' steps and proposed
+108 optional lines; the first sceptic cut only 1. The agent said that was too
+agreeable and ran three more sceptics with different lenses (dish identity,
+the steps, and "all optional lines missing at the same time"). All 107 survived
+a two-of-three vote, but I also left required the four that one sceptic showed
+the dish depends on: the chilli in Fiery Steamed Pork Ribs and in the satay, the
+palm sugar in the green curry ("sweet green curry"), and the spring onion in the
+fried rice (with all six of its optional lines gone it stops being the dish).
+
+**What I chose:** 103 optional lines across 43 meals, "N of M" counting
+required lines only with "+K optional", and every price and calorie figure left
+on the recipe as written.
+
+**Local check before pushing (production build):** MML's five ingredients →
+Thunder Basil "36% match, you have 4 of 11 · +1 optional"; its detail screen
+lists Palm Sugar under "Optional, you can leave out (1)" and the missing total
+covers the 7 required items only (S$2.85). Wok-Charred Noodles reads "2 of 9 ·
++4 optional" on the card and "You have (2 + 1 optional)" on the detail screen,
+with Spring Onion marked "· optional". Every meal reads 100% and "Nothing
+missing" when only its required lines are ticked; none is ready with an empty
+kitchen. The meal count still read "24 meals · 0 ready".

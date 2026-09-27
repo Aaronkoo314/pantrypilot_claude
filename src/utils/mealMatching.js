@@ -72,18 +72,25 @@ export function defaultSortDir(sortId) {
  * one of its SUBSTITUTES. That line carries `substituteId`, so every screen can
  * say which swap was assumed. A substitute is never one the recipe already
  * uses in its own right, and each owned item stands in for one line at most.
+ *
+ * A line marked `optional` never blocks "Nothing missing". The match figure
+ * and "you have N of M" count required lines only; a missing optional line
+ * goes to `optionalMissingIngredients` rather than to "Still need". Required
+ * lines are offered the stand-ins first, so a garnish cannot use up the only
+ * substitute a required line needed.
  */
 export function matchMeal(meal, ownedIds) {
   const owned = ownedIds instanceof Set ? ownedIds : new Set(ownedIds);
   const recipeIds = new Set(meal.ingredients.map((line) => line.id));
   const usedAsSubstitute = new Set();
+  const matched = new Map();
 
-  const haveIngredients = [];
-  const missingIngredients = [];
+  const required = meal.ingredients.filter((line) => !line.optional);
+  const optional = meal.ingredients.filter((line) => line.optional);
 
-  meal.ingredients.forEach((line) => {
+  [...required, ...optional].forEach((line) => {
     if (owned.has(line.id)) {
-      haveIngredients.push(line);
+      matched.set(line.id, line);
       return;
     }
     const substituteId = (SUBSTITUTES[line.id] || []).find(
@@ -91,21 +98,27 @@ export function matchMeal(meal, ownedIds) {
     );
     if (substituteId) {
       usedAsSubstitute.add(substituteId);
-      haveIngredients.push({ ...line, substituteId });
-    } else {
-      missingIngredients.push(line);
+      matched.set(line.id, { ...line, substituteId });
     }
   });
 
-  const total = meal.ingredients.length;
-  const matchPercent = total === 0 ? 0 : Math.round((haveIngredients.length / total) * 100);
+  // Back in recipe order, so every list reads the way the recipe is written.
+  const haveIngredients = meal.ingredients.filter((line) => matched.has(line.id)).map((line) => matched.get(line.id));
+  const missingIngredients = required.filter((line) => !matched.has(line.id));
+  const optionalMissingIngredients = optional.filter((line) => !matched.has(line.id));
+  const haveCount = required.length - missingIngredients.length;
+
+  const total = required.length;
+  const matchPercent = total === 0 ? 0 : Math.round((haveCount / total) * 100);
 
   return {
     ...meal,
     haveIngredients,
     missingIngredients,
-    haveCount: haveIngredients.length,
+    optionalMissingIngredients,
+    haveCount,
     totalIngredientCount: total,
+    optionalCount: optional.length,
     matchPercent,
     isReadyToCook: missingIngredients.length === 0,
   };

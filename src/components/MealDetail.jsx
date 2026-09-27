@@ -54,8 +54,10 @@ export default function MealDetail({ meal, initialServings, onBack }) {
   const haveLines = scaled.ingredients
     .filter((line) => haveById.has(line.id))
     .map((line) => ({ ...line, substituteId: haveById.get(line.id).substituteId }));
-  const needLines = scaled.ingredients.filter((line) => !haveById.has(line.id));
+  const needLines = scaled.ingredients.filter((line) => !haveById.has(line.id) && !line.optional);
+  const optionalLines = scaled.ingredients.filter((line) => !haveById.has(line.id) && line.optional);
   const shoppingCost = needLines.reduce((total, line) => total + line.linePrice, 0);
+  const optionalCost = optionalLines.reduce((total, line) => total + line.linePrice, 0);
 
   const cuisine = CUISINE_BY_ID[meal.cuisine];
   const band = WEIGHT_BAND_BY_ID[meal.weightBand];
@@ -71,7 +73,7 @@ export default function MealDetail({ meal, initialServings, onBack }) {
     return (
       <li className={`ingredient-row row-${kind}`} key={line.id}>
         <span className="row-mark" aria-hidden="true">
-          {kind === 'have' ? '✓' : '+'}
+          {kind === 'have' ? '✓' : kind === 'optional' ? '–' : '+'}
         </span>
         <span className="row-emoji" aria-hidden="true">
           {(stand || line.ingredient).emoji}
@@ -84,6 +86,7 @@ export default function MealDetail({ meal, initialServings, onBack }) {
           ) : (
             line.ingredient.name
           )}
+          {kind === 'have' && line.optional && <span className="row-swap"> · optional</span>}
         </span>
         <span className="row-qty">{line.display}</span>
         <span className="row-price">{formatPrice(line.linePrice)}</span>
@@ -201,7 +204,14 @@ export default function MealDetail({ meal, initialServings, onBack }) {
           Ingredients for {servings} {servings === 1 ? 'serving' : 'servings'}
         </h2>
 
-        <h3 className="group-title group-have">You have ({haveLines.length})</h3>
+        {/* Same count as the card's "you have N of M": optional lines the user
+            happens to own are listed, but counted separately. */}
+        <h3 className="group-title group-have">
+          You have ({haveLines.filter((line) => !line.optional).length}
+          {haveLines.some((line) => line.optional) &&
+            ` + ${haveLines.filter((line) => line.optional).length} optional`}
+          )
+        </h3>
         {haveLines.length === 0 ? (
           <p className="empty-note">Nothing from this recipe is in your kitchen yet.</p>
         ) : (
@@ -217,6 +227,19 @@ export default function MealDetail({ meal, initialServings, onBack }) {
             <p className="base-note">
               The {needLines.length} {needLines.length === 1 ? 'item' : 'items'} you are missing
               come to <strong>{formatPrice(shoppingCost)}</strong> at this serving size.
+            </p>
+          </>
+        )}
+
+        {optionalLines.length > 0 && (
+          <>
+            <h3 className="group-title group-optional">
+              Optional, you can leave out ({optionalLines.length})
+            </h3>
+            <ul className="ingredient-list">{optionalLines.map((l) => ingredientRow(l, 'optional'))}</ul>
+            <p className="base-note">
+              The dish still works without {optionalLines.length === 1 ? 'it' : 'these'}. Buying{' '}
+              {optionalLines.length === 1 ? 'it' : 'them'} adds {formatPrice(optionalCost)}.
             </p>
           </>
         )}
