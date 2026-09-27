@@ -1325,4 +1325,5 @@ and copied to the repository `pantrypilot_before`.
 
 Every repair began with the Step 5 prompt and the agent's arguments before any code, and every
 one was reviewed by three independent reviewers, each finding checked by a sceptic, before it was
-pushed. In five of the six, that review found a real defect my own check had passed.
+pushed. Five such reviews covered the six repairs (§6.1 and §6.2 were reviewed together), and each
+found at least one real defect that my own check had passed.
