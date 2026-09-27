@@ -6,52 +6,82 @@
  * The search only worked for somebody who already knew the app's own word.
  *
  * Three layers, in this order, and the order is the point:
- *   1. A name contains what was typed - exactly what the search did before, so
- *      a search that already worked keeps its list. The one addition is where
- *      an alias adds the same item under its other name: "green" now also
- *      offers Spring Onion (green onion).
+ *   1. A name contains what was typed, as before. Every text that used to
+ *      find an ingredient still finds it; the names are also compared with
+ *      "chilli" and "chili" spelled the same, so either spelling finds all
+ *      three chilli items.
  *   2. Another name for the same item (SEARCH_ALIASES) counts as a normal hit.
  *      To stop "egg" finding Aubergine through "eggplant", an alias matches a
- *      whole word, or a word it starts with once four letters are typed.
- *   3. Only when 1 and 2 find nothing: the closest names by spelling, nearest
- *      tier only, shown apart and labelled as closest, never mixed into real
- *      matches, so a near miss cannot be ticked by mistake for what was meant.
- *
- * Spelling is compared, not displayed: "chili" and "chilli" match each other.
+ *      whole word, or a word it starts with once four letters are typed. So
+ *      "green" also offers Spring Onion (green onion) beside Green Curry Paste.
+ *   3. Only when 1 and 2 find nothing: the closest names by spelling, shown
+ *      apart and labelled as closest, never mixed into real matches, so a
+ *      near miss cannot be ticked by mistake for what was meant. Deliberately
+ *      strict, because a list that offers Salmon for "salt" teaches people to
+ *      ignore it: nearest tier only, same first letter, no guesses at all for
+ *      one or two letters, and nothing for pasted paragraphs.
  */
 
 import { INGREDIENTS, SEARCH_ALIASES } from '../data/pantryData.js';
 
 const MAX_CLOSEST = 5;
+const MIN_FUZZY_LENGTH = 3;
+const MAX_FUZZY_LENGTH = 40;
 
-function normalise(text) {
+/** Lowercase, accents off, punctuation to spaces, single spaces. */
+function base(text) {
   return text
     .toLowerCase()
     .normalize('NFD')
     .replace(/[̀-ͯ]/g, '')
     .replace(/[^a-z0-9 ]+/g, ' ')
-    .replace(/chilli/g, 'chili')
     .replace(/\s+/g, ' ')
     .trim();
 }
 
+/**
+ * One spelling for both "chili" and "chilli", used beside the plain text,
+ * never instead of it: a half-typed "chill" has no full word to fold, and
+ * must still find Red Chilli the way it always did.
+ */
+const fold = (text) => text.replace(/chil+i/g, 'chili');
+
 const words = (text) => text.split(' ').filter(Boolean);
 
+/** Every run of two or more words, joined: "seabass", "beansprouts". */
+function joinedRuns(text) {
+  const parts = words(text);
+  const runs = [];
+  for (let i = 0; i < parts.length; i += 1) {
+    for (let j = i + 2; j <= parts.length; j += 1) runs.push(parts.slice(i, j).join(''));
+  }
+  return runs;
+}
+
 const INDEX = INGREDIENTS.map((item) => {
-  const name = normalise(item.name);
-  const aliases = (SEARCH_ALIASES[item.id] || []).map(normalise);
+  const name = base(item.name);
+  const aliases = (SEARCH_ALIASES[item.id] || []).map(base);
+  const phrases = [name, ...aliases].map(fold);
+  // Typos are measured against both spellings: "chille" is one slip from
+  // "chilli" but two from "chili".
+  const spellings = [...new Set([name, ...aliases, ...phrases])];
   return {
     item,
     name,
-    aliases,
-    aliasWords: aliases.flatMap(words),
-    allWords: [...words(name), ...aliases.flatMap(words)],
+    folded: fold(name),
+    aliases: aliases.map(fold),
+    aliasWords: aliases.map(fold).flatMap(words),
+    phrases: spellings,
+    fuzzyWords: [...new Set([...spellings.flatMap(words), ...spellings.flatMap(joinedRuns)])],
   };
 });
 
+function nameMatches(entry, raw, folded) {
+  return entry.name.includes(raw) || entry.folded.includes(folded);
+}
+
 function aliasMatches(entry, needle) {
-  if (entry.aliases.some((alias) => alias === needle)) return true;
-  if (entry.aliasWords.includes(needle)) return true;
+  if (entry.aliases.includes(needle) || entry.aliasWords.includes(needle)) return true;
   if (needle.length < 4) return false;
   return (
     entry.aliases.some((alias) => alias.startsWith(needle)) ||
@@ -77,38 +107,71 @@ function editDistance(a, b) {
   return d[rows - 1][cols - 1];
 }
 
-// One slip in a short word, two in a longer one. Anything looser starts
-// suggesting unrelated food.
-const allowedSlips = (length) => (length <= 4 ? 1 : 2);
+// One slip in a word of up to five letters, two in a longer one, judged on the
+// shorter of the two so "ham" is not one slip from "lamb" and "daikon" is not
+// two from "dijon". Anything looser suggests unrelated food.
+const allowedSlips = (length) => (length <= 5 ? 1 : 2);
 
 /**
- * How far the typed text is from an ingredient, or Infinity if too far. A
- * one-word search is compared with each word of the name and aliases, and with
- * the start of each word, so a half-typed "chik" still finds the chickens.
+ * How close one typed word is to one word of a name, or Infinity. A whole word
+ * may be a slip or two away; the start of a longer word only one slip away,
+ * compared with one letter more than was typed, so a half-typed "chik" finds
+ * the chickens (one letter missing) but "mint" does not find "minced".
  */
-function distanceTo(entry, needle) {
+function wordDistance(needle, word) {
+  if (word[0] !== needle[0]) return Infinity; // typos rarely hit the first letter
+  const whole = editDistance(needle, word);
+  if (whole <= allowedSlips(Math.min(needle.length, word.length))) return whole;
+  // Four letters before guessing at a half-typed word: "jam" is not the start
+  // of "jasmine".
+  if (needle.length >= 4 && word.length > needle.length + 1) {
+    const start = editDistance(needle, word.slice(0, needle.length + 1));
+    if (start <= 1) return start;
+  }
+  return Infinity;
+}
+
+/** A multi-word text against a phrase: each run of as many words, whole or begun. */
+function phraseDistance(needle, phrase) {
+  const span = words(needle).length;
+  const parts = words(phrase);
   const limit = allowedSlips(needle.length);
   let best = Infinity;
-  if (needle.includes(' ')) {
-    // Compare with every run of the same number of words, so "soy suace"
-    // meets the "soy sauce" inside Light Soy Sauce and Dark Soy Sauce.
-    const span = words(needle).length;
-    for (const phrase of [entry.name, ...entry.aliases]) {
-      const parts = words(phrase);
-      best = Math.min(best, editDistance(needle, phrase));
-      for (let start = 0; start + span <= parts.length; start += 1) {
-        best = Math.min(best, editDistance(needle, parts.slice(start, start + span).join(' ')));
-      }
-    }
-  } else {
-    for (const word of entry.allWords) {
-      best = Math.min(best, editDistance(needle, word));
-      if (word.length > needle.length) {
-        best = Math.min(best, editDistance(needle, word.slice(0, needle.length)));
-      }
+  for (let start = 0; start + span <= parts.length; start += 1) {
+    const run = parts.slice(start, start + span).join(' ');
+    if (run[0] !== needle[0]) continue;
+    best = Math.min(best, editDistance(needle, run));
+    if (run.length > needle.length + 1) {
+      best = Math.min(best, editDistance(needle, run.slice(0, needle.length + 1)));
     }
   }
   return best <= limit ? best : Infinity;
+}
+
+function distanceTo(entry, needle) {
+  if (needle.includes(' ')) {
+    return Math.min(...entry.phrases.map((phrase) => phraseDistance(needle, phrase)));
+  }
+  return Math.min(...entry.fuzzyWords.map((word) => wordDistance(needle, word)));
+}
+
+/** Does one typed word point at this entry, by any of the three layers? */
+function wordPointsAt(entry, word) {
+  return (
+    nameMatches(entry, word, fold(word)) ||
+    aliasMatches(entry, word) ||
+    (word.length >= MIN_FUZZY_LENGTH && distanceTo(entry, word) !== Infinity)
+  );
+}
+
+function nearestTier(scored, better) {
+  if (scored.length === 0) return [];
+  const best = scored.reduce((top, candidate) => (better(candidate, top) ? candidate : top));
+  return scored
+    .filter((candidate) => !better(best, candidate) && !better(candidate, best))
+    .sort((a, b) => a.order - b.order)
+    .slice(0, MAX_CLOSEST)
+    .map((candidate) => candidate.entry.item);
 }
 
 /**
@@ -116,24 +179,34 @@ function distanceTo(entry, needle) {
  * filled only when there are no hits, nearest first, at most five.
  */
 export function searchIngredients(query) {
-  const needle = normalise(query);
+  const needle = base(query);
   if (!needle) return { hits: [], closest: [] };
 
+  const folded = fold(needle);
   const hits = INDEX.filter(
-    (entry) => entry.name.includes(needle) || aliasMatches(entry, needle)
+    (entry) => nameMatches(entry, needle, folded) || aliasMatches(entry, folded)
   ).map((entry) => entry.item);
   if (hits.length > 0) return { hits, closest: [] };
 
-  // Only the nearest tier: "chiken" is one slip from the four chickens and two
-  // from Chinese Cabbage, and offering the cabbage beside them is noise.
-  const scored = INDEX.map((entry, order) => ({ entry, order, distance: distanceTo(entry, needle) }))
-    .filter((candidate) => candidate.distance !== Infinity);
-  const nearest = Math.min(...scored.map((candidate) => candidate.distance));
-  const closest = scored
-    .filter((candidate) => candidate.distance === nearest)
-    .sort((a, b) => a.order - b.order)
-    .slice(0, MAX_CLOSEST)
-    .map((candidate) => candidate.entry.item);
+  if (folded.length < MIN_FUZZY_LENGTH || folded.length > MAX_FUZZY_LENGTH) {
+    return { hits: [], closest: [] };
+  }
 
-  return { hits: [], closest };
+  // Spelling first: the nearest names by edit distance.
+  const bySpelling = INDEX.map((entry, order) => ({ entry, order, distance: distanceTo(entry, folded) }))
+    .filter((candidate) => candidate.distance !== Infinity);
+  if (bySpelling.length > 0) {
+    return { hits: [], closest: nearestTier(bySpelling, (a, b) => a.distance < b.distance) };
+  }
+
+  // Then, for several words, the names most of them point at: "thigh chicken"
+  // or "fresh thai basil" still reach the item, word by word.
+  const typedWords = words(folded);
+  if (typedWords.length < 2) return { hits: [], closest: [] };
+  const byWords = INDEX.map((entry, order) => ({
+    entry,
+    order,
+    count: typedWords.filter((word) => wordPointsAt(entry, word)).length,
+  })).filter((candidate) => candidate.count > 0);
+  return { hits: [], closest: nearestTier(byWords, (a, b) => a.count > b.count) };
 }

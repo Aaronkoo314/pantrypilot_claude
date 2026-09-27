@@ -43,6 +43,22 @@ export default function IngredientPicker({ category, selectedIds, onToggle, quer
   // matches. See utils/ingredientSearch.js.
   const { hits: searchHits, closest } = useMemo(() => searchIngredients(query), [query]);
 
+  // What a screen reader hears after typing. The region sits in the search row
+  // on every page, so it exists before the first keystroke and its changes are
+  // announced; before PS4 no search result was announced at all.
+  let announcement = '';
+  if (searching) {
+    if (searchHits.length > 0) {
+      announcement = `${searchHits.length} ${searchHits.length === 1 ? 'match' : 'matches'}.`;
+    } else if (closest.length > 0) {
+      announcement = `No exact match. ${closest.length} closest ${
+        closest.length === 1 ? 'ingredient' : 'ingredients'
+      }.`;
+    } else {
+      announcement = 'Nothing matches.';
+    }
+  }
+
   const all = useMemo(
     () => INGREDIENTS.filter((item) => item.category === category),
     [category]
@@ -77,7 +93,7 @@ export default function IngredientPicker({ category, selectedIds, onToggle, quer
   if (searching) {
     return (
       <div className="step-body">
-        <SearchBox query={query} onQuery={onQuery} />
+        <SearchBox query={query} onQuery={onQuery} announcement={announcement} />
         {searchHits.length === 0 && closest.length > 0 ? (
           <>
             {/* Kept apart from real matches and named as a guess, so a near
@@ -110,7 +126,7 @@ export default function IngredientPicker({ category, selectedIds, onToggle, quer
   if (groupNames.length > 0) {
     return (
       <div className="step-body">
-        <SearchBox query={query} onQuery={onQuery} />
+        <SearchBox query={query} onQuery={onQuery} announcement={announcement} />
         {/* A grouped category can still have a meaningful shortcut. Pantry &
             Flavour does: olive oil and light soy sauce are in a quarter of the
             recipes each, and making somebody open "Chinese" to reach soy sauce
@@ -163,7 +179,7 @@ export default function IngredientPicker({ category, selectedIds, onToggle, quer
 
   return (
     <div className="step-body">
-      <SearchBox query={query} onQuery={onQuery} />
+      <SearchBox query={query} onQuery={onQuery} announcement={announcement} />
       {mostUsed && !expanded && (
         <p className="section-hint">
           The six these recipes use most. Tap &ldquo;See all&rdquo; for the other{' '}
@@ -182,7 +198,7 @@ export default function IngredientPicker({ category, selectedIds, onToggle, quer
   );
 }
 
-function SearchBox({ query, onQuery }) {
+function SearchBox({ query, onQuery, announcement }) {
   return (
     <div className="search-row">
       <input
@@ -193,6 +209,9 @@ function SearchBox({ query, onQuery }) {
         aria-label="Search all ingredients"
         onChange={(event) => onQuery(event.target.value)}
       />
+      <p className="visually-hidden" role="status" aria-live="polite">
+        {announcement}
+      </p>
     </div>
   );
 }

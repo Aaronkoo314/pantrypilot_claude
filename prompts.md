@@ -1061,7 +1061,40 @@ Closest ingredients:" Chicken Breast, Chicken Thigh, Chicken Wings, Minced Chick
 ticking Chicken Thigh from there added it; "scallion" → Spring Onion; "shrimp" → Prawns and
 Dried Shrimp; "capsicum" → Bell Pepper; "chili" and "chilli" → Red Chilli, Chilli Flakes,
 Chilli Bean Paste; "soy suace" → Light and Dark Soy Sauce; "xyz" → "Nothing matches 'xyz'.
-Try another name for it, or clear the search and browse this page." Of 28 searches that
-already found something, 27 return exactly what they did; "green" now also offers Spring
-Onion, through "green onion". Every one of the 93 names still finds itself. A search takes
-about half a millisecond. No console errors; no sideways scroll at 400 px.
+Try another name for it, or clear the search and browse this page." I recorded that 27 of
+28 searches that already found something were unchanged; §6.7 shows that sample was too
+small and the claim was wrong. No console errors; no sideways scroll at 400 px.
+
+## 6.7 What the review of §6.6 caught before I pushed
+
+The three-reviewer check (matching, closest suggestions, screen and documents), each
+finding tested by a sceptic, confirmed that my own test had missed the two things the
+repair most needed to get right:
+
+1. **It broke searches that used to work** (found by three reviewers). Folding "chilli"
+   into "chili" rewrote the stored names, so a half-typed "chill" or "Red Chill" no longer
+   matched: across all 3,621 substrings of the old names, 45 lost an item they used to
+   find. My 28-search sample never typed half a word. The names are now compared as typed
+   *and* with both spellings folded, and the sweep over all 3,621 substrings loses none.
+2. **"Closest" suggested unrelated food** (found by three reviewers): "salt" offered
+   Salmon Fillet, "mint" the minced meats, "ham" and "jam" Lamb and Jasmine Rice, "tea"
+   five items. It now suggests only within one slip for words of up to five letters and two
+   for longer ones, judged on the shorter word, with the same first letter, only after four
+   letters for a half-typed word, and never for one or two letters or pasted paragraphs.
+
+Also fixed: a multi-word typo lost its suggestion while the second word was being typed
+("chiken th"); words in another order or with an extra word ("thigh chicken", "fresh thai
+basil") found nothing, and now fall back to the names most of the words point at; names
+typed as one word ("seabass", "beansprouts") found nothing; and no search result was
+announced to screen readers, before or after the change, so a polite status line in the
+search row now says how many matched, or that the list is only closest, or that nothing did.
+
+**Re-checked:** all 3,621 substrings of the old names keep every item they found; 30 gain
+one, all intended (both chilli spellings, Spring Onion through "green onion", Prawns through
+"shrimp"). Of 29 foods that are not in the catalogue, 25 now get "Nothing matches"; the
+other four are "egg" and "eggp" (real hits: eggs, and Aubergine through "eggplant"), "beer"
+(one slip from Beef) and "sake" (one slip from "snake beans"). All 28 typos and other names
+in my list find the item. A search that finds nothing takes about 0.02 ms. In the
+production build the status line read "3 matches." for "chill", "No exact match. 4 closest
+ingredients." for "chiken" and "Nothing matches." for "salt", and the search box kept its
+focus throughout.
