@@ -1237,10 +1237,10 @@ its words, a broader generic only when its description visibly says what it is, 
 and a sceptic per batch tried to refute every choice. 92 of 93 were agreed. The one dispute was
 Beef Sirloin: US "top sirloin" against the striploin that "sirloin" means in Singapore; I kept top
 sirloin, the current record, because its description says sirloin. I also moved Silken Tofu from
-"silken, firm" to "silken, soft", because both recipes use it trembling or in curds. Result: 28
-records kept, 51 new, 14 null (galangal, kaffir lime leaves, mixed herbs, Dijon mustard, dark soy,
-Shaoxing wine, rice vinegar, chilli bean paste, five spice, both curry pastes, palm sugar, tamarind
-paste, dried shrimp).
+"silken, firm" to "silken, soft", because both recipes use it trembling or in curds; §6.11 shows
+that was still the wrong call. Result after §6.11: 28 records kept, 50 new, 15 null (galangal,
+kaffir lime leaves, silken tofu, mixed herbs, Dijon mustard, dark soy, Shaoxing wine, rice vinegar,
+chilli bean paste, five spice, both curry pastes, palm sugar, tamarind paste, dried shrimp).
 
 **Local check before pushing:** four calls with USDA's public DEMO_KEY first confirmed the shape
 of a record fetched by id. Then the handler itself, run locally against USDA: Minced Chicken →
@@ -1248,3 +1248,30 @@ record 171116 "Chicken, ground, raw", SR Legacy, 17.44 g protein, 143 kcal; Aube
 "Eggplant, raw", Foundation, 26 kcal by Atwater General with 22 by Specific; Galangal → an honest
 empty without calling USDA; `constructor` and `__proto__` → 400. Figures are rounded as the search
 rounded them, so the panel looks as it did.
+
+## 6.11 What the review of §6.10 caught before I pushed
+
+Three reviewers (the function, the records, the screen and documents), each finding tested by a
+sceptic. The function itself held: a mocked-fetch run of every branch, and a check of all 78 pinned
+records against USDA's own bulk files, found no wrong figure. The records and the wording did not:
+
+1. **Silken Tofu was pinned to a brand.** USDA's only silken tofu rows are MORI-NU's label figures,
+   which contradicts the panel's own credit that it uses reference records, not packaged
+   products, and my move from "firm" to "soft" did not change that. It is now null, and the panel
+   says so honestly: 78 records, 15 nulls.
+2. **The empty sentence claimed more than was checked**: "USDA FoodData Central has no record of
+   this exact food", when only its analysed reference sets were searched. It now says the
+   reference records have none, and that we would rather say so than show a packaged product's
+   label figures.
+3. **"About a quarter" was wrong**: 23 of 67 is about a third. The comments, RANKING-RULES.md and
+   the table header now give the count itself.
+4. RANKING-RULES.md §10 still described the name search this commit removed; two record comments
+   misquoted USDA's inch marks as apostrophes; and a code comment still said SR Legacy records carry
+   no derivation, which is untrue for records fetched by id.
+
+Refuted, and left as they are: Chicken Thigh, Pork Belly and Chicken Wings show a small negative
+carbohydrate (for example -0.17 g), but that is the figure USDA publishes by difference for those
+Foundation records, and rounding it to 0 would make the panel disagree with the record it cites; a
+kcal value could in theory be rounded twice, but none of the 8,586 energy rows in either USDA list
+falls where that would change a digit; and a non-JSON reply from USDA would be reported as our
+fault, but that path predates this change.

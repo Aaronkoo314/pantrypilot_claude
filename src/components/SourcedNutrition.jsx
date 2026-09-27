@@ -130,14 +130,15 @@ export default function SourcedNutrition({ ingredients }) {
         )}
 
         {/* Since PS4 every ingredient is matched to one record chosen by hand,
-            so "empty" means USDA holds no record of this food as the recipe
+            so "empty" means USDA holds no reference record of this food as the recipe
             uses it - not that a search missed. A near match used to be shown
             here instead (canned luncheon meat for Minced Chicken). */}
         {status === 'empty' && (
           <p className="sourced-state">
-            USDA FoodData Central has no record of this exact food, so {selectedName} has no sourced
-            figure. We would rather say so than show a record for something else. Everything shown
-            for it above is our own estimate.
+            USDA FoodData Central’s analysed reference records have no record of this exact food,
+            so {selectedName} has no sourced figure. We would rather say so than show a record for
+            something else, or a packaged product’s label figures. Everything shown for it above is
+            our own estimate.
           </p>
         )}
 

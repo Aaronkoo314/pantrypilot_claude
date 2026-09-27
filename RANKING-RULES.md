@@ -268,9 +268,10 @@ This was a decision rather than an omission, so it belongs in this file.
 **Which record, since Problem Set 4.** Each ingredient is matched by hand to one record in
 `src/data/usdaRecords.js`, and the function fetches that record by its id. It used to search by
 name and take the first hit, which can only match words: "Minced Chicken" came back as canned
-luncheon meat and "Potatoes" as potato bread, and a sweep of all 93 found about a quarter of the
-records shown were another food. The table holds 79 records, each the same food in the form the
-recipe uses, and 14 nulls, where USDA has no record of that food and the panel says so. Like the
+luncheon meat and "Potatoes" as potato bread, and a sweep of all 93 found 23 of the 67 records shown
+were another food. The table holds 78 records, each the same food in the form the recipe uses and
+all from USDA's analysed reference sets, and 15 nulls, where those sets have no record of that
+food and the panel says so. Like the
 swap table and the optional flags, it is authored and needs a person to check it.
 
 The tempting version is to recompute each meal's calories from real per-ingredient data and let
@@ -288,10 +289,11 @@ the provider switched off.
 worth of invented macros, and the honest description of that is a provenance feature rather than a
 nutrition feature. `assessment.md` marks it as such.
 
-**Two things the lookup will not do.** It never guesses: a search that matches nothing returns an
-honest empty rather than the nearest food, and it asks only for analysed reference records, not
-for packaged products whose label figures round to zero. Both were failures first — see
-`prompts.md` §5.3 and `assessment.md` B4.
+**Two things the lookup will not do.** It never guesses: an ingredient with no exact record has a
+null in `src/data/usdaRecords.js`, and the function returns an honest empty without calling USDA,
+rather than the nearest food. And every pinned record is one of the analysed reference records
+(Foundation or SR Legacy), never a packaged product whose label figures round to zero. Both were
+failures first — see `prompts.md` §5.3, §6.10 and `assessment.md` B4.
 
 ---
 

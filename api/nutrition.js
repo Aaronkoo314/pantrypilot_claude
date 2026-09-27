@@ -39,7 +39,7 @@ const ENERGY_LEGACY = 1008; // present on SR Legacy records, absent from Foundat
 
 /**
  * Pull one nutrient out of the array. Every field except value is optional:
- * Foundation records carry derivationDescription, SR Legacy records do not,
+ * the by-id record gives most nutrients a derivation, but not every one,
  * and reading one that is absent is how a citation renders "undefined".
  */
 function readNutrient(nutrients, id) {
@@ -105,7 +105,7 @@ export default async function handler(req, res) {
   // One record per ingredient, chosen by hand (src/data/usdaRecords.js). This
   // used to search by name and take the first hit, and a search can only match
   // words: "Minced Chicken" came back as canned luncheon meat, "Potatoes" as
-  // potato bread, "Milk" as milk crackers - about a quarter of the records
+  // potato bread, "Milk" as milk crackers - 23 of the 67 records
   // shown were another food (PS4 finding from MML). A pinned record is the
   // same food every time, and an ingredient USDA does not hold as that food
   // has no record at all, which is said on screen rather than papered over.

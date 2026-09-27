@@ -5,11 +5,12 @@
  * PS4 finding from MML (heuristic #2, severity 3): the lookup used to search by
  * name and take the first hit, and "Minced Chicken" came back as canned
  * luncheon meat. A sweep of all 93 ingredients on 27 September 2026 found the
- * same fault in about a quarter of the records shown (potato bread for
+ * same fault in 23 of the 67 records shown (potato bread for
  * Potatoes, milk crackers for Milk, chicken skin for Chicken Thigh, egg white
  * for Eggs). So each record is now chosen by hand from USDA's Foundation and
  * SR Legacy lists: the same food, in the form the recipe uses it, raw or plain,
- * not a product that shares its words. One agent proposed each choice and a
+ * never a branded product's label figures, and not a product that shares its
+ * words. One agent proposed each choice and a
  * second tried to refute it; every id below was checked against the published
  * lists. null is an honest answer: the panel says USDA has no record of this
  * exact food rather than showing something else.
@@ -28,9 +29,9 @@ export const USDA_RECORDS = {
   'chicken-mince': 171116, // SR Legacy: Chicken, ground, raw
   'beef-chuck': 2646174, // Foundation: Beef, chuck, roast, boneless, choice, raw
   'beef-sirloin': 2727574, // Foundation: Beef, top sirloin steak, raw
-  'beef-short-rib': 170827, // SR Legacy: Beef, chuck, short ribs, boneless, separable lean and fat, trimmed to 0' fat, choice, raw
+  'beef-short-rib': 170827, // SR Legacy: Beef, chuck, short ribs, boneless, separable lean and fat, trimmed to 0" fat, choice, raw
   'beef-mince': 2514744, // Foundation: Beef, ground, 80% lean meat / 20% fat, raw
-  'lamb-leg': 174372, // SR Legacy: Lamb, leg, whole (shank and sirloin), separable lean and fat, trimmed to 1/8' fat, choice, raw
+  'lamb-leg': 174372, // SR Legacy: Lamb, leg, whole (shank and sirloin), separable lean and fat, trimmed to 1/8" fat, choice, raw
   'lamb-shoulder': 175262, // SR Legacy: Lamb, New Zealand, imported, square-cut shoulder, separable lean and fat, raw
   'lamb-chops': 172517, // SR Legacy: Lamb, New Zealand, imported, loin chop, separable lean and fat, raw
   'salmon-fillet': 2684441, // Foundation: Fish, salmon, Atlantic, farm raised, raw
@@ -40,7 +41,7 @@ export const USDA_RECORDS = {
   prawns: 2684443, // Foundation: Crustaceans, shrimp, farm raised, raw
   squid: 174223, // SR Legacy: Mollusks, squid, mixed species, raw
   'firm-tofu': 172448, // SR Legacy: Tofu, firm, prepared with calcium sulfate and magnesium chloride (nigari)
-  'silken-tofu': 174292, // SR Legacy: MORI-NU, Tofu, silken, soft
+  'silken-tofu': null, // no reference record: USDA's only silken tofu rows are one brand's label figures (MORI-NU)
   chickpeas: 2644288, // Foundation: Chickpeas (garbanzo beans, bengal gram), canned, sodium added, drained and rinsed
   'red-lentils': 174284, // SR Legacy: Lentils, pink or red, raw
   onion: 170000, // SR Legacy: Onions, raw
