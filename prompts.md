@@ -1275,3 +1275,54 @@ Foundation records, and rounding it to 0 would make the panel disagree with the 
 kcal value could in theory be rounded twice, but none of the 8,586 energy rows in either USDA list
 falls where that would change a digit; and a non-JSON reply from USDA would be reported as our
 fault, but that path predates this change.
+
+**Live check after pushing §6.10–6.11** (Sunday 27 September 2026, on
+https://pantrypilot-phi.vercel.app): all 93 ingredients looked up again on the live
+`/api/nutrition`: 78 of 78 pinned records served with exactly the pinned id, 15 of 15 nulls
+answered with the honest empty, no mismatch and no stale cached record. MML's screen, Thunder Basil →
+Nutrition, opened on Minced Chicken as "Chicken, ground, raw", record 171116 (it had been canned
+luncheon meat); Palm Sugar showed the new empty sentence; IKD's sea bass was still record 175142;
+`constructor` and `toString` got 400; `/api/health` answered 200. A tab already open before the
+deploy kept the old wording until it was reloaded, because moving between screens only changes the
+hash.
+
+## 6.12 What I left, and why
+
+The Step 5 table says to leave severity 2 met by one reviewer, and severity 1, unless the repair
+takes minutes, and to say why in the reply. Every finding of severity 3 is repaired above.
+
+| Finding | Raised by | Severity · reach | Why it stays |
+| --- | --- | --- | --- |
+| "Heavy" and "Medium" tags read as one scale (calories vs difficulty) | CCH | 2 · one | Lowest tier; left for time |
+| Progress-bar segments have no step names | CCH | 2 · one | Lowest tier; left for time |
+| "Check it yourself" opens raw developer output at `/api/health` | CCH | 2 · one | Lowest tier; the link is a deliberate proof that the lookup is live |
+| 0%-match meals mixed into the results | MML | 1 · one | Lowest tier; I had also argued the 0% meals show what else the app can cook, and did not take it to the arbiter |
+| My own Findings 1, 3, 4, 5, 6 (edit entry point, emoji, overlap, step order, dish image) | only me | 1–2 · one | Third row of my table: no groupmate met them |
+
+Known limits stated honestly rather than fixed: "0 ready" stays 0 for my groupmates' kitchens,
+because recipes need 8–15 lines and they ticked 2–7; Chicken Thigh, Pork Belly and Chicken Wings
+show a small negative carbohydrate, which is USDA's own published figure; kitchens saved before
+§6.8 keep the 30-minute answer, now shown on every Next button.
+
+## 6.13 Index of the Problem Set 4 commits
+
+The version my groupmates reviewed is commit `70f657e`, kept live at its own deployment address
+and copied to the repository `pantrypilot_before`.
+
+| Commit | What it did | Finding |
+| --- | --- | --- |
+| `744dacd` | Swap table: ingredients I have count for close equivalents | MML, IKD · H2 · 3 |
+| `2d90692` | 103 optional lines no longer block "ready" | MML · H2 · 3 |
+| `23cbf4d` | Review fixes for the two above (card vs detail count, contrast, docs) | — |
+| `ce3ba8e` | Back stays inside the app; the kitchen is remembered | IKD, CCH · H3 · 3 |
+| `7917686` | Review fixes (history depth, Start fresh, `#meal-constructor`, focus) | — |
+| `7e1b4a0` | Search: typos, other names, both spellings of chilli | MML · H6 · 2 |
+| `61999e7` | Review fixes (half-typed "chill", strict closest list, screen reader) | — |
+| `9a3f17b` | No hidden 30-minute default; the limit shown beside the count | IKD · H1 · 3 |
+| `cf0a837` | Review fixes (note overflowing Next on phones, Undo save) | — |
+| `604a7c2` | One hand-chosen USDA record per ingredient; `?id=constructor` closed | MML · H2 · 3 |
+| `b3734bb` | Review fixes (branded Silken Tofu, empty-sentence scope, counts) | — |
+
+Every repair began with the Step 5 prompt and the agent's arguments before any code, and every
+one was reviewed by three independent reviewers, each finding checked by a sceptic, before it was
+pushed. In five of the six, that review found a real defect my own check had passed.

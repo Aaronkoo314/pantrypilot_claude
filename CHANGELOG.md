@@ -11,7 +11,7 @@ Problem Sets 1 and 2.
 | Document | Describes |
 | --- | --- |
 | [`REFLECTION.md`](REFLECTION.md) | v1 as submitted. It is the graded artefact and is not rewritten. |
-| [`prompts.md`](prompts.md) | **both problem sets, in one history.** Sections 1-4 are v1 as submitted and are not rewritten; section 5 is the Problem Set 2 back end. |
+| [`prompts.md`](prompts.md) | **all the problem sets, in one history.** Sections 1-4 are v1 as submitted and are not rewritten; section 5 is the Problem Set 2 back end; section 6 is the Problem Set 4 revision. |
 | [`assessment.md`](assessment.md) | **the current app.** Problem Set 2's criteria, marking and collaboration assessment. |
 | [`RANKING-RULES.md`](RANKING-RULES.md) | **the current app.** Rewritten for v2. |
 | [`README.md`](README.md) | the current app. |
@@ -25,6 +25,26 @@ npm run dev
 ```
 
 ---
+
+## v5 — revised from my group's heuristic evaluation (Problem Set 4)
+
+Six repairs, each traced to a groupmate's finding and recorded with its Step 5 prompt, the agent's
+arguments and the review that followed in [`prompts.md`](prompts.md) §6; the commit index is §6.13.
+The version reviewed is `70f657e`.
+
+- **Close equivalents count as "have"**: a short hand-written swap table (minced chicken from thigh
+  or breast, thigh for breast, minced pork from shoulder, white and jasmine rice), each swap named
+  on screen.
+- **Optional lines**: 103 garnishes and pinches across 43 meals never block "Nothing missing"; "you
+  have N of M" counts required lines only.
+- **Back and reload**: each screen has its own address (`#results`, `#meal-<id>`), and the kitchen
+  is remembered in this browser, announced with "Welcome back · Start fresh".
+- **Search**: other names (scallion, shrimp, capsicum…), both spellings of chilli (Chili Flakes is
+  now Chilli Flakes), and the nearest names when nothing matches.
+- **No hidden time limit**: no default until the user picks one; the limit is shown beside the count.
+- **Sourced nutrition**: one hand-chosen USDA record per ingredient (78 records, 15 honest nulls),
+  fetched by id, replacing a first-hit name search that showed another food for 23 of 67; the id
+  check now accepts own keys only.
 
 ## v4 — one page at a time, feedback, and analytics
 
