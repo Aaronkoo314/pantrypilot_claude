@@ -119,6 +119,8 @@ export function matchMeal(meal, ownedIds) {
     haveCount,
     totalIngredientCount: total,
     optionalCount: optional.length,
+    // Optional lines the user owns: the "+K optional" both screens print.
+    optionalHaveCount: optional.length - optionalMissingIngredients.length,
     matchPercent,
     isReadyToCook: missingIngredients.length === 0,
   };

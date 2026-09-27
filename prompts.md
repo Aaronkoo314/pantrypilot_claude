@@ -874,10 +874,39 @@ required lines only with "+K optional", and every price and calorie figure left
 on the recipe as written.
 
 **Local check before pushing (production build):** MML's five ingredients →
-Thunder Basil "36% match, you have 4 of 11 · +1 optional"; its detail screen
-lists Palm Sugar under "Optional, you can leave out (1)" and the missing total
-covers the 7 required items only (S$2.85). Wok-Charred Noodles reads "2 of 9 ·
-+4 optional" on the card and "You have (2 + 1 optional)" on the detail screen,
-with Spring Onion marked "· optional". Every meal reads 100% and "Nothing
-missing" when only its required lines are ticked; none is ready with an empty
-kitchen. The meal count still read "24 meals · 0 ready".
+Thunder Basil "36% match, you have 4 of 11"; its detail screen lists Palm Sugar
+under "Optional, you can leave out (1)" and the missing total covers the 7
+required items only (S$2.85). Wok-Charred Noodles reads "2 of 9 · +1 optional"
+on the card and "You have (2 + 1 optional)" on the detail screen, with Spring
+Onion marked "· optional". Every meal reads 100% and "Nothing missing" when only
+its required lines are ticked; none is ready with an empty kitchen. The meal
+count still read "24 meals · 0 ready".
+
+## 6.3 What an independent review caught before I pushed
+
+Before pushing §6.1 and §6.2, the agent had three reviewers read the diff
+(matching logic, screen consistency, data and docs), each finding checked by a
+sceptic who tried to refute it. Five distinct defects were confirmed (two of
+them found by two reviewers each):
+
+1. **The card and the detail screen disagreed** (medium). The card printed
+   "+K optional" for every optional line in the recipe; the detail screen
+   counted only the ones I own. Wok-Charred Noodles read "2 of 9 · +4 optional"
+   on the card and "You have (2 + 1 optional)" in the detail, and with an empty
+   kitchen the card said "+4 optional" as if I owned four things. My own local
+   check had recorded exactly those numbers as a pass: I read the two figures
+   and did not notice that they measured different things. Both screens now
+   print the optional lines I own.
+2. The "for Minced Chicken" and "· optional" notes were 4.42:1 on the green
+   row, below WCAG AA; they now use a darker ink (5.73:1).
+3. "You have everything" sat directly above a list of optional things I did
+   not have; it now reads "You have everything you need".
+4. RANKING-RULES.md §2 still defined match as the share of *all* ingredients,
+   and the filter table still said "any missing ingredient"; both now describe
+   required lines and swaps.
+5. RANKING-RULES.md counted four authored items and then called the USDA lookup
+   "a fourth"; it is now "a fifth".
+
+One more reviewer argued the "+K optional" count was intended design; the
+sceptic confirmed the other two reviewers instead, because the spec says both
+screens must show the same count.

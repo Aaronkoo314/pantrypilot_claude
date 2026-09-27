@@ -220,7 +220,7 @@ export default function MealDetail({ meal, initialServings, onBack }) {
 
         <h3 className="group-title group-need">You still need ({needLines.length})</h3>
         {needLines.length === 0 ? (
-          <p className="ready-note">You have everything. Start cooking whenever you are ready.</p>
+          <p className="ready-note">You have everything you need. Start cooking whenever you are ready.</p>
         ) : (
           <>
             <ul className="ingredient-list">{needLines.map((l) => ingredientRow(l, 'need'))}</ul>

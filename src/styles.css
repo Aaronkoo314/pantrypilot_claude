@@ -812,7 +812,8 @@ button {
 
 /* "for Minced Chicken" after a swapped ingredient: the assumption stays visible. */
 .row-swap {
-  color: var(--ink-faint);
+  /* --ink-soft, not --ink-faint: faint is 4.42:1 on the green have-row, below AA. */
+  color: var(--ink-soft);
   font-size: 14px;
 }
 

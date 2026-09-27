@@ -32,7 +32,7 @@ export default function MealCard({ meal, onOpen }) {
         <span>{meal.matchPercent}% match</span>
         <span className="match-count">
           you have {meal.haveCount} of {meal.totalIngredientCount}
-          {meal.optionalCount > 0 && ` · +${meal.optionalCount} optional`}
+          {meal.optionalHaveCount > 0 && ` · +${meal.optionalHaveCount} optional`}
         </span>
       </p>
       {/* The line above states the figure; the meter only echoes it, so it is

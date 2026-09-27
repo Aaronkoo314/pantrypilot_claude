@@ -45,12 +45,13 @@ disagreed with its whole-dish macros on 9 of its 11 meals as a result.
 
 ## 2. Ingredient match — the only number the user can audit
 
-> **A meal's match is the share of its ingredients the user has ticked, as a whole percentage.**
+> **A meal's match is the share of its required lines the user has, ticked or covered by a listed
+> swap, as a whole percentage.**
 
 `src/utils/mealMatching.js` · `matchMeal()`
 
 ```
-matchPercent = round(100 × ingredients you have ÷ ingredients the recipe needs)
+matchPercent = round(100 × required lines you have, ticked or swapped ÷ required lines)
 ```
 
 No weighting and no fuzzy matching. A clove of garlic counts exactly as much as
@@ -60,14 +61,10 @@ screen lists the seven it is, under "You have (7)".
 
 **Optional lines, since Problem Set 4.** A recipe line marked `optional: true` in `pantryData.js`
 (103 of them, across 43 meals: garnishes, finishing herbs and oils, a pinch among several
-seasonings) never blocks "Nothing missing" and is left out of the match:
-
-```
-matchPercent = round(100 × required lines you have ÷ required lines)
-```
-
-The card prints "you have 7 of 11 · +2 optional"; the detail screen lists what you lack under
-"Optional, you can leave out", with what buying them would add, and the "missing" total covers
+seasonings) never blocks "Nothing missing" and is left out of "N of M". When the user happens to
+own some, both screens add the same figure: the card prints "you have 7 of 11 · +2 optional" and
+the detail screen "You have (7 + 2 optional)". The optional lines the user lacks are listed under
+"Optional, you can leave out", with what buying them would add; the "missing" total covers
 required lines only. Optional is set per line, never per ingredient, because garlic can be a
 garnish in one dish and the point of another. Price and calories still include every line, so they
 describe the recipe as written.
@@ -78,9 +75,10 @@ Thigh for Chicken Breast, Pork Shoulder for Minced Pork, and White Rice and Jasm
 other. The list is hand-written and short on purpose; the comment above it records what was left
 out and why. A swap is never hidden: the card says "Using Chicken Thigh for Minced Chicken" and the
 detail screen prints "for Minced Chicken" under the stand-in. A stand-in the recipe already uses in
-its own right is never borrowed, and one owned item stands in for one line at most. Price and
-nutrition stay those of the recipe's own ingredient. The card and the detail screen read the same
-`matchMeal()` result, so their counts cannot disagree.
+its own right is never borrowed, one owned item stands in for one line at most, and required lines
+are offered the stand-ins before optional ones. Price and nutrition stay those of the recipe's own
+ingredient. The card and the detail screen read the same `matchMeal()` result, so their counts
+cannot disagree.
 
 **Known limit, unchanged from v1.** The pantry is a boolean: the app knows *whether* you have
 garlic, never *how much*. A meal can read 100% match and still leave you short at the stove.
@@ -191,7 +189,7 @@ and none of these came from it.
 | Cuisine | meals not in a selected cuisine | no restriction |
 | Weight band | meals not in a selected band | no restriction |
 | Vegetarian only | meals with any non-vegetarian ingredient | off |
-| Only meals I can cook now | meals with any missing ingredient | off |
+| Only meals I can cook now | meals missing a required line (a swap counts as have; optional lines never block) | off |
 
 Cuisine and weight band are multi-select, and an empty selection means *no restriction* rather
 than *nothing*. The interface says that out loud on both screens rather than leaving it to be
@@ -306,7 +304,7 @@ for packaged products whose label figures round to zero. Both were failures firs
 Four things are authored by a person and therefore need a person to check them: **the macros and
 times on all 47 meals**, **the ingredient quantities and base servings on those meals**,
 **the 93 unit prices**, and **the swap table and the optional flags**, where one wrong entry makes
-a meal read "Nothing missing" when it is not. A fourth now needs watching rather than checking: **the live USDA lookup**,
+a meal read "Nothing missing" when it is not. A fifth now needs watching rather than checking: **the live USDA lookup**,
 which nobody here controls and which can be empty, refused or unreachable on any given evening. Everything else in this table is arithmetic on those four — which means a
 wrong quantity reaches the screen as a wrong price with no arithmetic error anywhere. That is the shortest honest statement of where the human review has to go, and it is
 the same conclusion `REFLECTION.md` reached about v1 — the cheap work is the code, and the
